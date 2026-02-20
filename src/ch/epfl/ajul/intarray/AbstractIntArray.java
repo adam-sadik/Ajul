@@ -32,20 +32,22 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
     public int get(int i) {
         return elements[i];
     }
-
+    /// retourne un tableau d'entier immuable ayant les mêmes éléments
+    /// et la même taille que le tableau auquel on applique la méthode.
     /// @return un tableau d'entier immuable ayant les mêmes éléments
     /// et la même taille que le tableau auquel on applique la méthode.
     @Override
     public ImmutableIntArray immutable() {
         return ImmutableIntArray.copyOf(elements);
     }
-
+    /// retourne une copie du tableau primitif interne (obtenue par clonage)
     /// @return une copie du tableau primitif interne (obtenue par clonage)
     @Override
     public int[] toArray() {
         return elements.clone();
     }
 
+    /// retourne une représentation textuelle du tableau identique à Arrays.toString
     /// @return une représentation textuelle du tableau identique à Arrays.toString
     @Override
     public String toString() {
