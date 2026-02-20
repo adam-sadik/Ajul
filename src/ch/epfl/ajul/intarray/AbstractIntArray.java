@@ -3,6 +3,7 @@ package ch.epfl.ajul.intarray;
 import java.util.Arrays;
 
 /// Classe-mère abstraite pour les différentes mises en œuvre de tableaux d'entiers.
+///
 /// @author Rayane Taoufik Benchekroun (412052)
 public abstract class AbstractIntArray implements ReadOnlyIntArray{
 
@@ -16,22 +17,24 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
         this.elements = elements;
     }
 
+    /// Retourne la taille du tableau
     /// @return la taille du tableau
     @Override
     public int size() {
         return elements.length;
     }
 
+    /// Retourne l'élément à l'index donné.
     /// @param i index d'un élément du tableau
-    /// @throws IndexOutOfBoundsException si cet index est invalide
     /// @return l'élement d'index i
+    /// @throws IndexOutOfBoundsException si cet index est invalide
     @Override
     public int get(int i) {
         return elements[i];
     }
 
     /// @return un tableau d'entier immuable ayant les mêmes éléments
-    /// et la même taille qu ele tableau auquel on applique la méthode.
+    /// et la même taille que le tableau auquel on applique la méthode.
     @Override
     public ImmutableIntArray immutable() {
         return ImmutableIntArray.copyOf(elements);
