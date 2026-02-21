@@ -13,13 +13,15 @@ public final class ImmutableIntArray extends AbstractIntArray {
         super(array);
     }
 
+    /// retourne un nouveau tableau d'entiers immuable dont la taille
+    /// et les éléments sont les mêmes que ceux du tableau primitif array.
     /// @param array le tableau primitif à copier
     /// @return un nouveau tableau d'entiers immuable dont la taille
     /// et les éléments sont les mêmes que ceux du tableau primitif array.
     public static ImmutableIntArray copyOf (int[] array){
         return new ImmutableIntArray(array.clone());
     }
-
+    /// retourne le récepteur lui-même (this), car il est déjà immuable
     /// @return le récepteur lui-même (this), car il est déjà immuable
     @Override
     public ImmutableIntArray immutable() {
