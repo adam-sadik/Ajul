@@ -17,7 +17,7 @@ public final class MutableIntArray extends AbstractIntArray {
     ///
     /// @param array le tableau primitif à emballer directement
     /// @return une nouvelle instance de MutableIntArray emballant le tableau
-    public static MutableIntArray wrapping ( int [] array){
+    public static MutableIntArray wrapping ( int [] array ){
         return new MutableIntArray(array);
     }
 

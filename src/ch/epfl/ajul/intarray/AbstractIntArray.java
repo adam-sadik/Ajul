@@ -13,7 +13,7 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
     /// Ce constructeur est destiné à être utilisé par les sous-classes.
     ///
     /// @param elements le tableau primitif contenant les éléments à stocker
-    protected AbstractIntArray ( int[] elements){
+    protected AbstractIntArray (int[] elements){
         this.elements = elements;
     }
 
