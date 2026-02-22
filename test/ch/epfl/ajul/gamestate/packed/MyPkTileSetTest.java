@@ -43,7 +43,6 @@ class MyPkTileSetTest {
     void addAndRemoveWorkCorrectly() {
         int set = PkTileSet.EMPTY;
 
-
         set = PkTileSet.add(set, TileKind.C);
         set = PkTileSet.add(set, TileKind.C);
         set = PkTileSet.add(set, TileKind.FIRST_PLAYER_MARKER);
@@ -115,5 +114,74 @@ class MyPkTileSetTest {
         for (TileKind.Colored c : destination) {
             assertNotNull(c);
         }
+    }
+
+    @Test
+    void sampleColoredIntoWorksWithEmptySet() {
+        TileKind.Colored[] destination = new TileKind.Colored[4];
+        RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
+
+        int nextIndex = PkTileSet.sampleColoredInto(PkTileSet.EMPTY, destination, 0, rng);
+
+        assertEquals(0, nextIndex);
+        for (TileKind.Colored c : destination) {
+            assertNull(c);
+        }
+    }
+
+    @Test
+    void copyColoredIntoWorksWithEmptySet() {
+        TileKind.Colored[] array = new TileKind.Colored[10];
+        int nextIndex = PkTileSet.copyColoredInto(PkTileSet.EMPTY, array);
+
+        assertEquals(0, nextIndex);
+        for (TileKind.Colored c : array) {
+            assertNull(c);
+        }
+    }
+
+    @Test
+    void addBeyondMaxCount() {
+        int set = PkTileSet.of(20, TileKind.B);
+        int newSet = PkTileSet.add(set, TileKind.B);
+        assertEquals(21, PkTileSet.countOf(newSet, TileKind.B));
+    }
+
+    @Test
+    void removeBelowMinCount() {
+        int set = PkTileSet.EMPTY;
+        int newSet = PkTileSet.remove(set, TileKind.D);
+        assertTrue(PkTileSet.countOf(newSet, TileKind.D) != 0);
+    }
+
+    @Test
+    void differenceWithNonSubset() {
+        int set1 = PkTileSet.of(2, TileKind.A);
+        int set2 = PkTileSet.of(3, TileKind.A);
+
+        int diffSet = PkTileSet.difference(set1, set2);
+        assertTrue(PkTileSet.countOf(diffSet, TileKind.A) != 0);
+    }
+
+    @Test
+    void unionWithOverflow() {
+        int set1 = PkTileSet.of(20, TileKind.A);
+        int set2 = PkTileSet.of(1, TileKind.A);
+
+        int unionSet = PkTileSet.union(set1, set2);
+        assertEquals(21, PkTileSet.countOf(unionSet, TileKind.A));
+    }
+
+    @Test
+    void copyColoredIntoWithNonZeroOffset() {
+        TileKind.Colored[] array = new TileKind.Colored[5];
+        int set = PkTileSet.of(2, TileKind.D);
+
+        array[0] = TileKind.Colored.A;
+        int nextIndex = PkTileSet.copyColoredInto(set, array);
+
+        assertEquals(2, nextIndex);
+        assertEquals(TileKind.Colored.D, array[0]);
+        assertEquals(TileKind.Colored.D, array[1]);
     }
 }
