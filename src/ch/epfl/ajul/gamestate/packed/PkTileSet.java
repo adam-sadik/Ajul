@@ -33,6 +33,18 @@ public final class PkTileSet {
         return set;
     }
 
+    private static boolean isValid(int pkTileSet) {
+        for (TileKind.Colored color : TileKind.Colored.ALL) {
+            if (countOf(pkTileSet, color) > 20) {
+                return false;
+            }
+        }
+        if (countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) > 1) {
+            return false;
+        }
+        return true;
+    }
+
     /// Retourne un ensemble de tuiles empaqueté ne contenant que le nombre spécifié de tuiles de la sorte donnée.
     ///
     /// @param count
@@ -41,7 +53,9 @@ public final class PkTileSet {
     ///        la sorte de tuile
     /// @return l'ensemble de tuiles empaqueté
     public static int of(int count, TileKind tileKind) {
-        return count << (tileKind.index() * TILE_KIND_BITS);
+        int result = count << (tileKind.index() * TILE_KIND_BITS);
+        assert isValid(result);
+        return result;
     }
 
     /// Retourne vrai si et seulement si l'ensemble de tuiles empaqueté est vide.
@@ -99,7 +113,9 @@ public final class PkTileSet {
     ///        la sorte de tuile à ajouter
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int add(int pkTileSet, TileKind tileKind) {
-        return pkTileSet + of(1, tileKind);
+        int result = pkTileSet + of(1, tileKind);
+        assert isValid(result);
+        return result;
     }
 
     /// Retourne un ensemble de tuiles empaqueté égal à celui donné, avec exactement une tuile de la sorte donnée en moins.
@@ -110,7 +126,9 @@ public final class PkTileSet {
     ///        la sorte de tuile à retirer
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int remove(int pkTileSet, TileKind tileKind) {
-        return pkTileSet - of(1, tileKind);
+        int result = pkTileSet - of(1, tileKind);
+        assert isValid(result);
+        return result;
     }
 
     /// Retourne l'union de deux ensembles de tuiles empaquetés.
@@ -121,7 +139,9 @@ public final class PkTileSet {
     ///        le deuxième ensemble empaqueté
     /// @return l'union des deux ensembles
     public static int union(int pkTileSet1, int pkTileSet2) {
-        return pkTileSet1 + pkTileSet2;
+        int result = pkTileSet1 + pkTileSet2;
+        assert isValid(result);
+        return result;
     }
 
     /// Retourne la différence de deux ensembles de tuiles empaquetés (le second devant être un sous-ensemble du premier).
@@ -132,7 +152,9 @@ public final class PkTileSet {
     ///        le sous-ensemble empaqueté à soustraire
     /// @return la différence des deux ensembles
     public static int difference(int pkTileSet1, int pkTileSet2) {
-        return pkTileSet1 - pkTileSet2;
+        int result = pkTileSet1 - pkTileSet2;
+        assert isValid(result);
+        return result;
     }
 
     /// Copie les tuiles colorées de l'ensemble empaqueté dans le tableau de destination ordonnées par couleur.
@@ -162,26 +184,25 @@ public final class PkTileSet {
     ///        l'index de départ dans le tableau
     /// @param randomGenerator
     ///        le générateur de nombres aléatoires
-    /// @return l'index, dans le tableau de destination, de l'élément qui suit le dernier écrit
+    /// @return la somme de offset et de la taille de l'ensemble
     public static int sampleColoredInto(int pkTileSet, TileKind.Colored[] destination, int offset, RandomGenerator randomGenerator) {
-        int sampleSize = destination.length - offset;
-        int i = 0;
+        int i = offset;
 
         for (TileKind.Colored color : TileKind.Colored.ALL) {
             int count = countOf(pkTileSet, color);
             for (int k = 0; k < count; k++) {
-                if (i < sampleSize) {
-                    destination[offset + i] = color;
+                if (i < destination.length) {
+                    destination[i] = color;
                 } else {
-                    int j = randomGenerator.nextInt(i + 1);
-                    if (j < sampleSize) {
-                        destination[offset + j] = color;
+                    int j = randomGenerator.nextInt(offset, i + 1);
+                    if (j < destination.length) {
+                        destination[j] = color;
                     }
                 }
                 i++;
             }
         }
-        return offset + Math.min(i, sampleSize);
+        return i;
     }
 
     /// Retourne la représentation textuelle de l'ensemble de tuiles.

@@ -108,9 +108,10 @@ class MyPkTileSetTest {
         TileKind.Colored[] destination = new TileKind.Colored[4];
         RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
 
+        // L'ensemble a 100 tuiles. On s'attend à ce que ça retourne 100 (l'offset étant 0)
         int nextIndex = PkTileSet.sampleColoredInto(PkTileSet.FULL_COLORED, destination, 0, rng);
 
-        assertEquals(4, nextIndex);
+        assertEquals(100, nextIndex);
         for (TileKind.Colored c : destination) {
             assertNotNull(c);
         }
@@ -140,37 +141,46 @@ class MyPkTileSetTest {
         }
     }
 
+    // ----------------------------------------------------
+    // Les tests sur les assertions (débordements)
+    // On s'attend explicitement à une AssertionError
+    // ----------------------------------------------------
+
     @Test
     void addBeyondMaxCount() {
         int set = PkTileSet.of(20, TileKind.B);
-        int newSet = PkTileSet.add(set, TileKind.B);
-        assertEquals(21, PkTileSet.countOf(newSet, TileKind.B));
+        assertThrows(AssertionError.class, () -> {
+            PkTileSet.add(set, TileKind.B);
+        });
     }
 
     @Test
     void removeBelowMinCount() {
         int set = PkTileSet.EMPTY;
-        int newSet = PkTileSet.remove(set, TileKind.D);
-        assertTrue(PkTileSet.countOf(newSet, TileKind.D) != 0);
+        assertThrows(AssertionError.class, () -> {
+            PkTileSet.remove(set, TileKind.D);
+        });
     }
 
     @Test
     void differenceWithNonSubset() {
         int set1 = PkTileSet.of(2, TileKind.A);
         int set2 = PkTileSet.of(3, TileKind.A);
-
-        int diffSet = PkTileSet.difference(set1, set2);
-        assertTrue(PkTileSet.countOf(diffSet, TileKind.A) != 0);
+        assertThrows(AssertionError.class, () -> {
+            PkTileSet.difference(set1, set2);
+        });
     }
 
     @Test
     void unionWithOverflow() {
         int set1 = PkTileSet.of(20, TileKind.A);
         int set2 = PkTileSet.of(1, TileKind.A);
-
-        int unionSet = PkTileSet.union(set1, set2);
-        assertEquals(21, PkTileSet.countOf(unionSet, TileKind.A));
+        assertThrows(AssertionError.class, () -> {
+            PkTileSet.union(set1, set2);
+        });
     }
+
+    // ----------------------------------------------------
 
     @Test
     void copyColoredIntoWithNonZeroOffset() {
@@ -183,5 +193,56 @@ class MyPkTileSetTest {
         assertEquals(2, nextIndex);
         assertEquals(TileKind.Colored.D, array[0]);
         assertEquals(TileKind.Colored.D, array[1]);
+    }
+
+    @Test
+    void sampleColoredIntoWorksWithMoreSpaceThanTiles() {
+        TileKind.Colored[] destination = new TileKind.Colored[5];
+        int set = PkTileSet.union(PkTileSet.of(2, TileKind.A), PkTileSet.of(1, TileKind.C));
+        RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
+
+        // On a 3 tuiles et un offset de 0. Résultat attendu : 3
+        int nextIndex = PkTileSet.sampleColoredInto(set, destination, 0, rng);
+
+        assertEquals(3, nextIndex);
+        assertEquals(TileKind.Colored.A, destination[0]);
+        assertEquals(TileKind.Colored.A, destination[1]);
+        assertEquals(TileKind.Colored.C, destination[2]);
+        assertNull(destination[3]);
+        assertNull(destination[4]);
+    }
+
+    @Test
+    void sampleColoredIntoWorksWithLessSpaceThanTiles() {
+        TileKind.Colored[] destination = new TileKind.Colored[3];
+        int set = PkTileSet.FULL_COLORED; // 100 tuiles
+        RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
+
+        // L'ensemble a 100 tuiles. On s'attend à ce que ça retourne 100 (l'offset étant 0)
+        int nextIndex = PkTileSet.sampleColoredInto(set, destination, 0, rng);
+
+        assertEquals(100, nextIndex);
+        for (int i = 0; i < 3; i++) {
+            assertNotNull(destination[i]);
+        }
+    }
+
+    @Test
+    void sampleColoredIntoWorksWithOffset() {
+        TileKind.Colored[] destination = new TileKind.Colored[5];
+        Arrays.fill(destination, TileKind.Colored.E);
+
+        int set = PkTileSet.of(10, TileKind.A);
+        RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
+
+        // 10 tuiles avec un offset de 2. Résultat attendu : 12.
+        int nextIndex = PkTileSet.sampleColoredInto(set, destination, 2, rng);
+
+        assertEquals(12, nextIndex);
+        assertEquals(TileKind.Colored.E, destination[0]);
+        assertEquals(TileKind.Colored.E, destination[1]);
+        assertEquals(TileKind.Colored.A, destination[2]);
+        assertEquals(TileKind.Colored.A, destination[3]);
+        assertEquals(TileKind.Colored.A, destination[4]);
     }
 }
