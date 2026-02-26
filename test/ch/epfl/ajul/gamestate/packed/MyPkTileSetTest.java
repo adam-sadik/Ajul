@@ -108,7 +108,6 @@ class MyPkTileSetTest {
         TileKind.Colored[] destination = new TileKind.Colored[4];
         RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
 
-        // L'ensemble a 100 tuiles. On s'attend à ce que ça retourne 100 (l'offset étant 0)
         int nextIndex = PkTileSet.sampleColoredInto(PkTileSet.FULL_COLORED, destination, 0, rng);
 
         assertEquals(100, nextIndex);
@@ -141,10 +140,6 @@ class MyPkTileSetTest {
         }
     }
 
-    // ----------------------------------------------------
-    // Les tests sur les assertions (débordements)
-    // On s'attend explicitement à une AssertionError
-    // ----------------------------------------------------
 
     @Test
     void addBeyondMaxCount() {
@@ -201,7 +196,6 @@ class MyPkTileSetTest {
         int set = PkTileSet.union(PkTileSet.of(2, TileKind.A), PkTileSet.of(1, TileKind.C));
         RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
 
-        // On a 3 tuiles et un offset de 0. Résultat attendu : 3
         int nextIndex = PkTileSet.sampleColoredInto(set, destination, 0, rng);
 
         assertEquals(3, nextIndex);
@@ -218,7 +212,6 @@ class MyPkTileSetTest {
         int set = PkTileSet.FULL_COLORED; // 100 tuiles
         RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
 
-        // L'ensemble a 100 tuiles. On s'attend à ce que ça retourne 100 (l'offset étant 0)
         int nextIndex = PkTileSet.sampleColoredInto(set, destination, 0, rng);
 
         assertEquals(100, nextIndex);
@@ -235,7 +228,6 @@ class MyPkTileSetTest {
         int set = PkTileSet.of(10, TileKind.A);
         RandomGenerator rng = RandomGeneratorFactory.getDefault().create(2026);
 
-        // 10 tuiles avec un offset de 2. Résultat attendu : 12.
         int nextIndex = PkTileSet.sampleColoredInto(set, destination, 2, rng);
 
         assertEquals(12, nextIndex);

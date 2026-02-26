@@ -215,10 +215,7 @@ public final class PkTileSet {
         for (TileKind kind : TileKind.ALL) {
             int count = countOf(pkTileSet, kind);
             if (count > 0) {
-                String name = switch (kind) {
-                    case TileKind.Colored c -> c.name();
-                    case TileKind.FirstPlayerMarker m -> m.name();
-                };
+                String name = kind.toString();
                 joiner.add(count + "*" + name);
             }
         }
