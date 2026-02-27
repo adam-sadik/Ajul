@@ -237,4 +237,6 @@ class MyPkTileSetTest {
         assertEquals(TileKind.Colored.A, destination[3]);
         assertEquals(TileKind.Colored.A, destination[4]);
     }
+
+
 }
