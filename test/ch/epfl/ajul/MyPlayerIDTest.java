@@ -6,7 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PlayerIDTest {
+public class MyPlayerIDTest {
 
     @Test
     void enumContainsExactlyFourPlayersInOrder(){
@@ -34,6 +34,23 @@ public class PlayerIDTest {
     void allIsImmutable() {
         assertThrows(UnsupportedOperationException.class,
                 () -> PlayerId.ALL.add(PlayerId.P1));
+    }
+    @Test
+    void allListContainsAllElementsInOrder() {
+        List<PlayerId> expected = List.of(PlayerId.P1, PlayerId.P2, PlayerId.P3, PlayerId.P4);
+        assertEquals(expected, PlayerId.ALL);
+    }
+
+    @Test
+    void enumCountIsCorrect() {
+        assertEquals(4, PlayerId.values().length);
+    }
+
+    @Test
+    void allListIsImmutable() {
+        assertThrows(UnsupportedOperationException.class, () -> {
+            PlayerId.ALL.add(PlayerId.P1);
+        });
     }
 
 }
