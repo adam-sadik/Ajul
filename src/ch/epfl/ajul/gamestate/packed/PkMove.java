@@ -25,7 +25,6 @@ public final class PkMove {
     private static final int DESTINATION_BITS = 3;
     private static final int DESTINATION_MASK =  ((1 << DESTINATION_BITS) - 1) << DESTINATION_OFFSET;
 
-    private PkMove() {}
 
 
 

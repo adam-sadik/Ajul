@@ -13,7 +13,6 @@ public final class PkPatterns {
     /// Représente les lignes de motif vides.
     public static final int EMPTY = 0;
 
-    private PkPatterns() {}
 
     /// Retourne le nombre de tuiles présentes sur la ligne de motif donnée.
     ///

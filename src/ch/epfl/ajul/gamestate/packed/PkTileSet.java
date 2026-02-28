@@ -22,7 +22,6 @@ public final class PkTileSet {
     private static final int TILE_KIND_BITS = 6;
     private static final int TILE_KIND_MASK = (1 << TILE_KIND_BITS) - 1;
 
-    private PkTileSet() {}
 
 
     private static int computeFull(boolean includeMarker) {
