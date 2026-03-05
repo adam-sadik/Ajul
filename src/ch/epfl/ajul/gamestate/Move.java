@@ -14,7 +14,7 @@ import java.util.Objects;
 /// @author Rayane TAOUFIK BENCHEKROUN (412052)
 public record Move(TileSource source, TileKind.Colored tileColor, TileDestination destination) {
 
-    ///  Nombre Maximal de coups valides possibles dans une partie d'Ajul
+    /// Nombre Maximal de coups valides possibles dans une partie d'Ajul
     /// Il correspond au produit du nombre maximal de fabriques,
     /// du nombre maximal couleurs distinctes dans une fabrique,
     /// et du nombre de destinations possibles.
