@@ -168,4 +168,141 @@ class MyPkFloorTest {
         int expectedBinary = 0b000000000000000000000001001101011;
         assertEquals(expectedBinary, f);
     }
+
+    @Test
+    void emptyConstantsAndSizeWork() {
+        assertEquals(0, PkFloor.EMPTY);
+        assertEquals(0, PkFloor.size(PkFloor.EMPTY));
+        assertFalse(PkFloor.containsFirstPlayerMarker(PkFloor.EMPTY));
+        assertEquals("[]", PkFloor.toString(PkFloor.EMPTY));
+        assertEquals(PkTileSet.EMPTY, PkFloor.asPkTileSet(PkFloor.EMPTY));
+    }
+
+    @Test
+    void withAddedTilesNormalAdditionWorks() {
+        int floor = PkFloor.EMPTY;
+// Ajout de 2 tuiles B et 1 tuile D
+        int tilesToAdd = PkTileSet.union(PkTileSet.of(2, TileKind.Colored.B), PkTileSet.of(1, TileKind.Colored.D));
+        floor = PkFloor.withAddedTiles(floor, tilesToAdd);
+
+        assertEquals(3, PkFloor.size(floor));
+        assertEquals(TileKind.Colored.B, PkFloor.tileAt(floor, 0));
+        assertEquals(TileKind.Colored.B, PkFloor.tileAt(floor, 1));
+        assertEquals(TileKind.Colored.D, PkFloor.tileAt(floor, 2));
+    }
+
+    @Test
+    void withAddedTilesOverflowIgnoresExcess() {
+// On remplit la ligne plancher avec 7 tuiles 'A'
+        int floor = PkFloor.withAddedTiles(PkFloor.EMPTY, PkTileSet.of(7, TileKind.Colored.A));
+        assertEquals(7, PkFloor.size(floor));
+
+// On tente d'ajouter 3 tuiles 'C' supplémentaires
+        int newFloor = PkFloor.withAddedTiles(floor, PkTileSet.of(3, TileKind.Colored.C));
+
+// La taille doit rester de 7, et la dernière tuile (index 6) doit TOUJOURS être un 'A'
+        assertEquals(7, PkFloor.size(newFloor));
+        assertEquals(TileKind.Colored.A, PkFloor.tileAt(newFloor, 6));
+    }
+
+    @Test
+    void withAddedTilesOverflowForcesFirstPlayerMarker() {
+// Ligne plancher remplie de 7 tuiles 'B'
+        int floor = PkFloor.withAddedTiles(PkFloor.EMPTY, PkTileSet.of(7, TileKind.Colored.B));
+
+// On tente d'ajouter 2 tuiles 'C' ET le marqueur 1er joueur
+        int tilesToAdd = PkTileSet.union(PkTileSet.of(2, TileKind.Colored.C), PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER));
+        int newFloor = PkFloor.withAddedTiles(floor, tilesToAdd);
+
+// La taille reste 7. Les 'C' ont été ignorés, mais le marqueur a remplacé la dernière tuile !
+        assertEquals(7, PkFloor.size(newFloor));
+        assertEquals(TileKind.Colored.B, PkFloor.tileAt(newFloor, 5)); // L'avant-dernière est intacte
+        assertEquals(TileKind.FIRST_PLAYER_MARKER, PkFloor.tileAt(newFloor, 6)); // La dernière a été écrasée
+        assertTrue(PkFloor.containsFirstPlayerMarker(newFloor));
+    }
+
+    @Test
+    void containsFirstPlayerMarkerDetectsProperly() {
+        int floor = PkFloor.withAddedTiles(PkFloor.EMPTY, PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER));
+        assertTrue(PkFloor.containsFirstPlayerMarker(floor));
+
+        int floor2 = PkFloor.withAddedTiles(PkFloor.EMPTY, PkTileSet.of(3, TileKind.Colored.E));
+        assertFalse(PkFloor.containsFirstPlayerMarker(floor2));
+    }
+
+    @Test
+    void asPkTileSetSymmetryTest() {
+        int floor = PkFloor.EMPTY;
+        int originalSet = PkTileSet.union(PkTileSet.of(3, TileKind.Colored.A), PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER));
+
+        floor = PkFloor.withAddedTiles(floor, originalSet);
+        int generatedSet = PkFloor.asPkTileSet(floor);
+
+// L'ensemble empaqueté généré depuis la ligne plancher doit être strictement égal à celui qu'on y a inséré
+        assertEquals(originalSet, generatedSet);
+    }
+
+    @Test
+    void toStringFormatsCorrectly() {
+        int floor = PkFloor.EMPTY;
+        floor = PkFloor.withAddedTiles(floor, PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER));
+        floor = PkFloor.withAddedTiles(floor, PkTileSet.union(PkTileSet.of(1, TileKind.Colored.B), PkTileSet.of(1, TileKind.Colored.A)));
+
+
+// Rappel : withAddedTiles insère par ordre des valeurs de l'enum (B d'abord, puis le marqueur)
+        assertEquals("[FIRST_PLAYER_MARKER, A, B]", PkFloor.toString(floor));
+    }
+
+    @Test
+    void sizeTrivialTest() {
+// 3 tuiles -> taille = 011 en binaire (3 en décimal)
+// Les autres bits n'ont pas d'importance pour la taille
+        int pkFloor = 0b101_010_001_011;
+        assertEquals(3, PkFloor.size(pkFloor));
+    }
+
+    @Test
+    void tileAtTrivialTest() {
+// Taille = 011 (3)
+// Tuile 0 = 001 (B, index 1)
+// Tuile 1 = 010 (C, index 2)
+// Tuile 2 = 101 (FIRST_PLAYER_MARKER, index 5)
+        int pkFloor = 0b101_010_001_011;
+
+        assertEquals(TileKind.Colored.B, PkFloor.tileAt(pkFloor, 0));
+        assertEquals(TileKind.Colored.C, PkFloor.tileAt(pkFloor, 1));
+        assertEquals(TileKind.FIRST_PLAYER_MARKER, PkFloor.tileAt(pkFloor, 2));
+    }
+
+    @Test
+    void containsFirstPlayerMarkerTrivialTest() {
+// Contient le marqueur à la 3ème position (101)
+        int pkFloorWithMarker = 0b101_010_001_011;
+        assertTrue(PkFloor.containsFirstPlayerMarker(pkFloorWithMarker));
+
+// Ne contient que des tuiles B (001) et C (010), taille 2
+        int pkFloorWithoutMarker = 0b010_001_010;
+        assertFalse(PkFloor.containsFirstPlayerMarker(pkFloorWithoutMarker));
+    }
+
+    @Test
+    void asPkTileSetTrivialTest() {
+// Ligne contenant : 1 B, 1 C, 1 Marqueur (taille 3)
+        int pkFloor = 0b101_010_001_011;
+
+// On attend un PkTileSet avec 1 B, 1 C et le bit du marqueur allumé.
+// B est à l'offset 6, C est à l'offset 12, le marqueur est le 31ème bit (bit de poids fort)
+        int expectedPkTileSet = 0b01_000000_000000_000001_000001_000000;
+
+        assertEquals(expectedPkTileSet, PkFloor.asPkTileSet(pkFloor));
+    }
+
+    @Test
+    void toStringTrivialTest() {
+// Ligne contenant : B, C, FIRST_PLAYER_MARKER
+        int pkFloor = 0b101_010_001_011;
+
+        String expected = "[B, C, FIRST_PLAYER_MARKER]";
+        assertEquals(expected, PkFloor.toString(pkFloor));
+    }
 }
