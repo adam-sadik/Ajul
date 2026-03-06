@@ -22,7 +22,7 @@ public final class Game {
     /// @throws IllegalArgumentException
     ///         si le nombre de joueurs n'est pas compris entre 2 et 4
     ///         ou si l'ordre des identités est incorrect
-    public Game(List<PlayerDescription> playerDescriptions){
+    public Game (List<PlayerDescription> playerDescriptions) {
 
         assert playerDescriptions != null;
         Preconditions.checkArgument(playerDescriptions.size() >= 2 && playerDescriptions.size() <= 4);
@@ -61,14 +61,14 @@ public final class Game {
     ///
     /// @return la liste immuable des fabriques utilisées dans la partie
     public List<TileSource.Factory> factories(){
-            return TileSource.Factory.ALL.subList(0,2*playersCount() +1);
+            return TileSource.Factory.ALL.subList(0, 2 * playersCount() + 1);
     }
 
     /// Retourne le nombre de fabriques utilisées dans la partie.
     ///
     /// @return le nombre de fabriques
     public int factoriesCount(){
-            return 2*playersCount()+1;
+            return 2 * playersCount() + 1;
     }
 
     /// Retourne la liste immuable des sources de tuiles utilisées
@@ -83,21 +83,21 @@ public final class Game {
     ///
     /// @return le nombre de sources de tuiles
     public int tileSourcesCount() {
-            return factoriesCount()+1;
+            return factoriesCount() + 1;
     }
     /// Retourne le nombre maximum de tuiles pouvant se trouver
     /// dans la zone centrale durant la partie.
     ///
     /// @return la taille maximale de la zone centrale
     public int centralAreaMaxSize() {
-            return 3*factoriesCount()+1;
+            return 3 * factoriesCount() +1;
     }
 
     /// Décrit un joueur participant à la partie.
     ///
     /// Une description contient son identité, son nom et son type
     /// (humain ou intelligence artificielle).
-    record PlayerDescription(PlayerId id, String name, PlayerKind kind) {
+    public record PlayerDescription(PlayerId id, String name, PlayerKind kind) {
 
         /// Construit une description de joueur.
         ///

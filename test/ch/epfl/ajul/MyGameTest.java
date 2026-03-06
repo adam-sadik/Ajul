@@ -360,6 +360,64 @@ public class MyGameTest {
 
     }
 
+    private final Game.PlayerDescription p1 = new Game.PlayerDescription(PlayerId.P1, "Alice", Game.PlayerDescription.PlayerKind.HUMAN);
+        private final Game.PlayerDescription p2 = new Game.PlayerDescription(PlayerId.P2, "Bob", Game.PlayerDescription.PlayerKind.AI);
+        private final Game.PlayerDescription p3 = new Game.PlayerDescription(PlayerId.P3, "Charlie", Game.PlayerDescription.PlayerKind.HUMAN);
+        private final Game.PlayerDescription p4 = new Game.PlayerDescription(PlayerId.P4, "Diana", Game.PlayerDescription.PlayerKind.AI);
+
+        @Test
+        void constructorAcceptsValidPlayerCounts() {
+            assertDoesNotThrow(() -> new Game(List.of(p1, p2)), "2 joueurs devrait être valide");
+            assertDoesNotThrow(() -> new Game(List.of(p1, p2, p3)), "3 joueurs devrait être valide");
+            assertDoesNotThrow(() -> new Game(List.of(p1, p2, p3, p4)), "4 joueurs devrait être valide");
+        }
+
+        @Test
+        void constructorRejectsInvalidPlayerCounts() {
+            assertThrows(IllegalArgumentException.class, () -> new Game(List.of())); // 0
+            assertThrows(IllegalArgumentException.class, () -> new Game(List.of(p1))); // 1
+            // Si un hypothétique P5 existait, on testerait 5 ici.
+        }
+
+        @Test
+        void constructorRejectsWrongPlayerIdOrder() {
+            // P2 à la place de P1
+            assertThrows(IllegalArgumentException.class, () -> new Game(List.of(p2, p1)));
+            // P1 puis P3 (saute P2)
+            assertThrows(IllegalArgumentException.class, () -> new Game(List.of(p1, p3)));
+        }
+
+        @Test
+        void playerDescriptionRejectsNulls() {
+            assertThrows(NullPointerException.class, () -> new Game.PlayerDescription(null, "A", Game.PlayerDescription.PlayerKind.HUMAN));
+            assertThrows(NullPointerException.class, () -> new Game.PlayerDescription(PlayerId.P1, null, Game.PlayerDescription.PlayerKind.HUMAN));
+            assertThrows(NullPointerException.class, () -> new Game.PlayerDescription(PlayerId.P1, "A", null));
+        }
+
+        @Test
+        void returnedListsAreUnmodifiable() {
+            Game game = new Game(List.of(p1, p2));
+            assertThrows(UnsupportedOperationException.class, () -> game.playerDescriptions().add(p3));
+            assertThrows(UnsupportedOperationException.class, () -> game.playerIds().remove(0));
+        }
+
+        @Test
+        void gameCalculatesCorrectMetricsFor2Players() {
+            Game game = new Game(List.of(p1, p2));
+            assertEquals(2, game.playersCount());
+            assertEquals(5, game.factoriesCount()); // 2*2 + 1
+            assertEquals(6, game.tileSourcesCount()); // 5 + 1
+            assertEquals(16, game.centralAreaMaxSize()); // 3*5 + 1
+        }
+
+        @Test
+        void gameCalculatesCorrectMetricsFor4Players() {
+            Game game = new Game(List.of(p1, p2, p3, p4));
+            assertEquals(4, game.playersCount());
+            assertEquals(9, game.factoriesCount()); // 2*4 + 1
+            assertEquals(10, game.tileSourcesCount()); // 9 + 1
+            assertEquals(28, game.centralAreaMaxSize()); // 3*9 + 1
+        }
 
     }
 

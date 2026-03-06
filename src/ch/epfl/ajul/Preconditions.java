@@ -12,7 +12,7 @@ public final class Preconditions {
     /// @throws IllegalArgumentException
     ///         si la condition est fausse.
     public static void checkArgument (boolean shouldBeTrue){
-        if ( !shouldBeTrue){
+        if (!shouldBeTrue){
             throw new IllegalArgumentException();
         }
     }
