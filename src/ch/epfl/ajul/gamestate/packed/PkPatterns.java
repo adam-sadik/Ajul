@@ -75,7 +75,7 @@ public final class PkPatterns {
     ///        la couleur des tuiles ajoutées
     /// @return les nouvelles lignes de motif empaquetées
     public static int withAddedTiles(int pkPatterns, TileDestination.Pattern line, int tileCount, TileKind.Colored color) {
-        assert tileCount > 0;
+        assert tileCount >= 0;
         assert canContain(pkPatterns, line, color);
         assert size(pkPatterns, line) + tileCount <= line.capacity();
 

@@ -12,21 +12,24 @@ import java.util.StringJoiner;
 public final class PkWall {
 
     /// Représente un mur vide.
-    public static int EMPTY = 0;
+    public static final int EMPTY = 0;
     /// Largeur du mur (nombre de colonnes).
-    public static int WALL_WIDTH = 5;
+    public static final int WALL_WIDTH = 5;
 
     /// Hauteur du mur (nombre de lignes).
-    public static int WALL_HEIGHT = 5;
+    public static final int WALL_HEIGHT = 5;
 
-    /// Masques binaires pour chaque couleur sur le mur.
-    public static int COLOR_MASK_A = 0b10000_01000_00100_00010_00001;
-    public static int COLOR_MASK_B = 0b00001_10000_01000_00100_00010;
-    public static int COLOR_MASK_C = 0b00010_00001_10000_01000_00100;
-    public static int COLOR_MASK_D = 0b00100_00010_00001_10000_01000;
-    public static int COLOR_MASK_E = 0b01000_00100_00010_00001_10000;
+    private static final int COLOR_MASK_A = 0b10000_01000_00100_00010_00001;
+    private static final int COLOR_MASK_B = 0b00001_10000_01000_00100_00010;
+    private static final int COLOR_MASK_C = 0b00010_00001_10000_01000_00100;
+    private static final int COLOR_MASK_D = 0b00100_00010_00001_10000_01000;
+    private static final int COLOR_MASK_E = 0b01000_00100_00010_00001_10000;
+    private static final int ROW0_MASK = 0b00000_00000_00000_00000_11111;
+    private static final int COLUMN_MASK = 0b00001_00001_00001_00001_00001;
+
 
     private static int countHorizontal(int pkWall, TileDestination.Pattern line, int startCol, int step) {
+        assert startCol >= 0 && startCol < WALL_WIDTH;
         int count = 0;
         int col = startCol + step;
         while (col >= 0 && col < WALL_WIDTH && hasTileAt(pkWall, line, colorAt(line, col))) {
@@ -37,6 +40,8 @@ public final class PkWall {
     }
 
     private static int countVertical(int pkWall, int col, int startRow, int step) {
+        assert col >= 0 && col < WALL_WIDTH;
+        assert startRow >= 0 && startRow < WALL_HEIGHT;
         int count = 0;
         int row = startRow + step;
         while (row >= 0 && row < WALL_HEIGHT) {
@@ -71,6 +76,7 @@ public final class PkWall {
     /// @param column La colonne du mur.
     /// @return La couleur correspondante.
     public static TileKind.Colored colorAt(TileDestination.Pattern line, int column) {
+        assert column >= 0 && column < WALL_WIDTH;
         return TileKind.Colored.ALL.get((line.index() * 4 + column) % WALL_HEIGHT);
     }
 
@@ -118,24 +124,21 @@ public final class PkWall {
     /// @param pkWall Le mur empaqueté.
     /// @return Vrai si au moins une ligne est pleine.
     public static boolean hasFullRow(int pkWall) {
-        boolean hasFullRow = false;
         for (TileDestination.Pattern line : TileDestination.Pattern.ALL){
-            if (hGroupSize(pkWall, line, colorAt(line, 0)) == WALL_WIDTH) {
-                hasFullRow = true;
-                break ;
+            if (isRowFull(pkWall, line)) {
+                return true;
             }
         }
-        return hasFullRow;
+        return false;
     }
 
 
     public static boolean isRowFull(int pkWall, TileDestination.Pattern line) {
-        int ROW0_MASK = 0b00000_00000_00000_00000_11111;
         return PkIntSet32.containsAll(pkWall, ROW0_MASK << line.index() * WALL_WIDTH);
     }
 
     public static boolean isColumnFull(int pkWall, int column) {
-        int COLUMN_MASK = 0b00001_00001_00001_00001_00001;
+        assert column >= 0 && column < WALL_WIDTH;
         return PkIntSet32.containsAll(pkWall, COLUMN_MASK << column);
     }
 
