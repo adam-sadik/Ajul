@@ -1,10 +1,7 @@
 package ch.epfl.ajul.gamestate;
 
-import ch.epfl.ajul.Game;
-import ch.epfl.ajul.PlayerId;
-import ch.epfl.ajul.gamestate.packed.PkIntSet32;
-import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
-import ch.epfl.ajul.gamestate.packed.PkWall;
+import ch.epfl.ajul.*;
+import ch.epfl.ajul.gamestate.packed.*;
 import ch.epfl.ajul.intarray.ImmutableIntArray;
 import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
@@ -52,25 +49,66 @@ public interface ReadOnlyGameState {
         return isRoundOver() && isRowFull;
     }
 
-//    default int pkDiscardedTiles(){
-//
-//        int sources = PkTileSet.EMPTY ;
-//        for (int i = 0; i < pkTileSources().size(); ++i) {
-//            sources = PkTileSet.union(sources,pkTileSources().get(i) );
-//        }
-//        int unionBagAndPatterns = PkTileSet.union(pkTileBag(), sources );
-//
-//        int patternsAndFloor = PkTileSet.EMPTY;
-//        int wall = PkTileSet.EMPTY;
-//
-//        int unionPatternsAndFloor;
-//
-//        for (int i = 0; i < playerIds().size(); ++i) {
-//            patternsAndFloor = PkTileSet.union(PkPlayerStates.pkFloor(pkPlayerStates(), PlayerId.ALL.get(i)), PkPlayerStates.pkPatterns(pkPlayerStates(), PlayerId.ALL.get(i)));
-//        }
-//
-//        return PkTileSet.difference(PkTileSet.FULL,PkTileSet.union(pkTileBag())
-//    }
+    default int pkDiscardedTiles(){
+
+        int sources = PkTileSet.EMPTY ;
+        int wall = PkTileSet.EMPTY;
+        int floor = PkTileSet.EMPTY;
+        int patterns = PkTileSet.EMPTY;
+        int patternsAndFloor;
+        int unionBagAndSources;
+        int unionWallAndPatternsAndFloor;
+        int total;
+
+        for (int i = 0; i < pkTileSources().size(); ++i) {
+            sources = PkTileSet.union(sources,pkTileSources().get(i) );
+        }
+
+        unionBagAndSources = PkTileSet.union(pkTileBag(), sources );
+
+        for (int i = 0; i < playerIds().size(); ++i) {
+            floor = PkTileSet.union(floor, PkPlayerStates.pkPatterns(pkPlayerStates(), PlayerId.ALL.get(i)));
+        }
+
+        for (int i = 0; i < playerIds().size(); i++) {
+            patterns = PkTileSet.union(patterns,PkPlayerStates.pkFloor(pkPlayerStates(), PlayerId.ALL.get(i)));
+        }
+
+        patternsAndFloor = PkTileSet.union ( floor, patterns);
+
+        for (int i = 0; i < playerIds().size() ; i++) {
+            wall = PkTileSet.union(wall, PkPlayerStates.pkWall(pkPlayerStates(), PlayerId.ALL.get(i)));
+        }
+
+        unionWallAndPatternsAndFloor = PkTileSet.union(wall,patternsAndFloor);
+        total = PkTileSet.union(unionBagAndSources, unionWallAndPatternsAndFloor);
+
+        return PkTileSet.difference(PkTileSet.FULL,total);
+    }
+
+    default int validMoves(short[] destination) {
+        assert destination.length >= Move.MAX_MOVES;
+        int index = currentPlayerId().ordinal();
+        int i = 0;
+        for (TileSource source : TileSource.ALL) {
+            for (TileKind.Colored color : TileKind.Colored.ALL) {
+                for (TileDestination dest : TileDestination.ALL) {
+                    boolean isPatternFull = PkPatterns.isFull(PkPlayerStates.pkPatterns(pkPlayerStates(), currentPlayerId()), (TileDestination.Pattern) dest);
+
+                    if ((dest instanceof TileDestination.Pattern) && !isPatternFull) {
+                        if (color == PkPatterns.color(PkPlayerStates.pkPatterns(pkPlayerStates(), currentPlayerId()), (TileDestination.Pattern) dest))
+                            destination[i] = PkMove.pack(source, color, dest);
+                        ++i;
+                    } else if (dest instanceof TileDestination.Floor) {
+                        destination[i] = PkMove.pack(source, color, dest);
+                        ++i;
+                    }
+                }
+            }
+        }
+        return i;
+    }
+
 
 
 
