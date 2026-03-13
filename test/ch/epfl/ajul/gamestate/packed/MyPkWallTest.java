@@ -224,4 +224,5 @@ public class MyPkWallTest {
         String result = PkWall.toString(wall);
         assertTrue(result.startsWith("[AbCde,"));
     }
+
 }
