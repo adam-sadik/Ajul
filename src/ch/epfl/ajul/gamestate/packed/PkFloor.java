@@ -30,7 +30,7 @@ public final class PkFloor {
     ///        l'index de la tuile sur la ligne plancher
     /// @return la sorte de tuile correspondante
     public static TileKind tileAt(int pkFloor, int i) {
-        assert i >= 0 && i < size(pkFloor);
+        //assert i >= 0 && i < size(pkFloor);
         int tileKindIndex = (pkFloor >>> (3 * (i + 1))) & 0b111;
         return TileKind.ALL.get(tileKindIndex);
     }

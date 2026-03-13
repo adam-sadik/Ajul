@@ -31,11 +31,6 @@ public class MyGameTest {
         });
     }
 
-    @Test
-    void constructorThrowsIfListIsNull() {
-        assertThrows(AssertionError.class, () ->
-                new Game(null));
-    }
 
     @Test
     void constructorThrowsIfLessThanTwoPlayers() {

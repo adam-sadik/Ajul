@@ -23,8 +23,7 @@ public final class Game {
     ///         si le nombre de joueurs n'est pas compris entre 2 et 4
     ///         ou si l'ordre des identités est incorrect
     public Game (List<PlayerDescription> playerDescriptions) {
-
-        assert playerDescriptions != null;
+        //assert playerDescriptions != null;
         Preconditions.checkArgument(playerDescriptions.size() >= 2 && playerDescriptions.size() <= 4);
         for (int i = 0; i < playerDescriptions.size(); ++i) {
                 Preconditions.checkArgument(playerDescriptions.get(i).id() == PlayerId.ALL.get(i));

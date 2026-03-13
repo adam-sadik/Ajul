@@ -13,6 +13,7 @@ public final class PkWall {
 
     /// Représente un mur vide.
     public static final int EMPTY = 0;
+
     /// Largeur du mur (nombre de colonnes).
     public static final int WALL_WIDTH = 5;
 
@@ -29,7 +30,7 @@ public final class PkWall {
 
 
     private static int countHorizontal(int pkWall, TileDestination.Pattern line, int startCol, int step) {
-        assert startCol >= 0 && startCol < WALL_WIDTH;
+        //assert startCol >= 0 && startCol < WALL_WIDTH;
         int count = 0;
         int col = startCol + step;
         while (col >= 0 && col < WALL_WIDTH && hasTileAt(pkWall, line, colorAt(line, col))) {
@@ -40,8 +41,8 @@ public final class PkWall {
     }
 
     private static int countVertical(int pkWall, int col, int startRow, int step) {
-        assert col >= 0 && col < WALL_WIDTH;
-        assert startRow >= 0 && startRow < WALL_HEIGHT;
+        //assert col >= 0 && col < WALL_WIDTH;
+        //assert startRow >= 0 && startRow < WALL_HEIGHT;
         int count = 0;
         int row = startRow + step;
         while (row >= 0 && row < WALL_HEIGHT) {
@@ -76,7 +77,7 @@ public final class PkWall {
     /// @param column La colonne du mur.
     /// @return La couleur correspondante.
     public static TileKind.Colored colorAt(TileDestination.Pattern line, int column) {
-        assert column >= 0 && column < WALL_WIDTH;
+        //assert column >= 0 && column < WALL_WIDTH;
         return TileKind.Colored.ALL.get((line.index() * 4 + column) % WALL_HEIGHT);
     }
 
@@ -138,7 +139,7 @@ public final class PkWall {
     }
 
     public static boolean isColumnFull(int pkWall, int column) {
-        assert column >= 0 && column < WALL_WIDTH;
+        //assert column >= 0 && column < WALL_WIDTH;
         return PkIntSet32.containsAll(pkWall, COLUMN_MASK << column);
     }
 

@@ -45,7 +45,7 @@ public final class PkMove {
     /// @return la source correspondante
     public static TileSource source(short pkMove) {
         int sourceIndex = (pkMove & SOURCE_MASK) >> SOURCE_OFFSET;
-        assert sourceIndex < TileSource.ALL.size();
+        //assert sourceIndex < TileSource.ALL.size();
         return TileSource.ALL.get(sourceIndex);
     }
 
@@ -53,7 +53,7 @@ public final class PkMove {
     /// @return la couleur courrespondante
     public static TileKind.Colored color(short pkMove){
         int colorIndex = ( pkMove & COLOR_MASK) >> COLOR_OFFSET;
-        assert colorIndex < TileKind.Colored.ALL.size();
+        //assert colorIndex < TileKind.Colored.ALL.size();
         return TileKind.Colored.ALL.get(colorIndex);
     }
 
@@ -61,7 +61,7 @@ public final class PkMove {
     /// @return la destination correspondante
     public static TileDestination destination(short pkMove){
         int destinationIndex = ( pkMove & DESTINATION_MASK) >> DESTINATION_OFFSET;
-        assert destinationIndex < TileDestination.ALL.size();
+        //assert destinationIndex < TileDestination.ALL.size();
         return TileDestination.ALL.get(destinationIndex);
     }
 

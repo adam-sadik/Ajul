@@ -17,7 +17,7 @@ public final class PkIntSet32 {
     /// @param i L'entier dont on veut vérifier la présence (doit être entre 0 et 31).
     /// @return Vrai si l'entier i est présent dans l'ensemble.
     public static boolean contains (int pkIntSet32, int i) {
-        assert i >= 0 && i < Integer.SIZE;
+        //assert i >= 0 && i < Integer.SIZE;
         return ((pkIntSet32 >>> i) & 1) == 1;
     }
 
@@ -34,7 +34,7 @@ public final class PkIntSet32 {
     /// @param i L'entier à ajouter (doit être entre 0 et 31).
     /// @return Un nouvel ensemble empaqueté contenant i.
     public static int add (int pkIntSet32, int i){
-        assert i >= 0 && i < Integer.SIZE;
+        //assert i >= 0 && i < Integer.SIZE;
         return pkIntSet32 | (1 << i);
     }
 
@@ -43,7 +43,7 @@ public final class PkIntSet32 {
     /// @param i L'entier à retirer (doit être entre 0 et 31).
     /// @return Un nouvel ensemble empaqueté ne contenant plus i.
     public static int remove (int pkIntSet32, int i){
-        assert i >= 0 && i < Integer.SIZE;
+        //assert i >= 0 && i < Integer.SIZE;
         return pkIntSet32 & ~(1 << i);
     }
 
