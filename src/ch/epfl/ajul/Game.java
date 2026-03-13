@@ -6,7 +6,7 @@ import java.util.Objects;
 /// Représente une configuration immuable d'une partie d'Ajul.
 /// La classe est immuable : toutes les listes retournées sont
 /// non modifiables.
-///
+/// @author Rayane TAOUFIK BENCHEKROUN (412052)
 public final class Game {
 
     private final List<PlayerDescription> playerDescriptions;
@@ -97,6 +97,7 @@ public final class Game {
     ///
     /// Une description contient son identité, son nom et son type
     /// (humain ou intelligence artificielle).
+    /// @author Rayane TAOUFIK BENCHEKROUN (412052)
     public record PlayerDescription(PlayerId id, String name, PlayerKind kind) {
 
         /// Construit une description de joueur.

@@ -104,4 +104,43 @@ public class MyPkIntSet32Test {
         int set = PkIntSet32.add(PkIntSet32.EMPTY, 10);
         assertFalse(PkIntSet32.containsAll(PkIntSet32.EMPTY, set));
     }
+    @Test
+    void pkIntSet32EmptyIsCorrectlyDefined() {
+        assertEquals(0, PkIntSet32.EMPTY);
+    }
+
+    @Test
+    void pkIntSet32AddAndContainsWork() {
+        int set = PkIntSet32.EMPTY;
+        for (int i = 0; i < 32; i++) {
+            assertFalse(PkIntSet32.contains(set, i));
+            set = PkIntSet32.add(set, i);
+            assertTrue(PkIntSet32.contains(set, i));
+        }
+        // A la fin, tous les bits doivent être à 1 (soit -1 en complément à 2)
+        assertEquals(-1, set);
+    }
+
+    @Test
+    void pkIntSet32RemoveWorks() {
+        int set = -1; // Tous les bits à 1
+        for (int i = 0; i < 32; i++) {
+            assertTrue(PkIntSet32.contains(set, i));
+            set = PkIntSet32.remove(set, i);
+            assertFalse(PkIntSet32.contains(set, i));
+        }
+        assertEquals(PkIntSet32.EMPTY, set);
+    }
+
+    @Test
+    void pkIntSet32ContainsAllWorks() {
+        int setA = 0b101010;
+        int setB = 0b100010;
+        int setC = 0b111010;
+
+        assertTrue(PkIntSet32.containsAll(setA, setB));
+        assertFalse(PkIntSet32.containsAll(setB, setA));
+        assertTrue(PkIntSet32.containsAll(setC, setA));
+        assertTrue(PkIntSet32.containsAll(setA, PkIntSet32.EMPTY));
+    }
 }

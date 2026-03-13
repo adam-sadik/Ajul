@@ -224,4 +224,112 @@ public class MyPkWallTest {
         String result = PkWall.toString(wall);
         assertTrue(result.startsWith("[AbCde,"));
     }
+    @Test
+    void pkWallConstantsAreCorrect() {
+        assertEquals(0, PkWall.EMPTY);
+        assertEquals(5, PkWall.WALL_WIDTH);
+        assertEquals(5, PkWall.WALL_HEIGHT);
+    }
+
+    @Test
+    void pkWallColumnAndColorAtWorkInSynch() {
+        for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
+            for (TileKind.Colored color : TileKind.Colored.ALL) {
+                int col = PkWall.column(line, color);
+                assertTrue(col >= 0 && col < 5);
+                // Vérifier la réversibilité
+                assertEquals(color, PkWall.colorAt(line, col));
+            }
+        }
+    }
+
+    @Test
+    void pkWallIndexOfWorksProperly() {
+        // Test manuel basé sur la figure 2
+        assertEquals(24, PkWall.indexOf(TileDestination.Pattern.PATTERN_5, TileKind.Colored.A));
+        assertEquals(0, PkWall.indexOf(TileDestination.Pattern.PATTERN_1, TileKind.Colored.A));
+        assertEquals(1, PkWall.indexOf(TileDestination.Pattern.PATTERN_1, TileKind.Colored.B));
+        assertEquals(5, PkWall.indexOf(TileDestination.Pattern.PATTERN_2, TileKind.Colored.E));
+    }
+
+    @Test
+    void pkWallWithTileAtAndHasTileAtWork() {
+        int wall = PkWall.EMPTY;
+        TileDestination.Pattern line = TileDestination.Pattern.PATTERN_3; // Index 2
+        TileKind.Colored color = TileKind.Colored.A; // Colonne 2 (Index 12)
+
+        assertFalse(PkWall.hasTileAt(wall, line, color));
+        wall = PkWall.withTileAt(wall, line, color);
+        assertTrue(PkWall.hasTileAt(wall, line, color));
+
+        // S'assurer qu'aucune autre tuile n'a été ajoutée
+        assertFalse(PkWall.hasTileAt(wall, line, TileKind.Colored.B));
+    }
+
+    @Test
+    void pkWallGroupSizesWork() {
+        int wall = PkWall.EMPTY;
+
+        // Construction d'un mur avec un groupe horizontal de 3 et un groupe vertical de 2
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.B); // ligne 0, col 1
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.C); // ligne 0, col 2
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.D); // ligne 0, col 3
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_2, TileKind.Colored.A); // ligne 1, col 1
+
+        // Testons à la position (Ligne 0, Couleur B)
+        assertEquals(3, PkWall.hGroupSize(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.B));
+        assertEquals(2, PkWall.vGroupSize(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.B));
+
+        // Testons avec une tuile isolée non ajoutée (devrait valoir 1)
+        assertEquals(1, PkWall.hGroupSize(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.E));
+    }
+
+    @Test
+    void pkWallFullCheckersWork() {
+        int wall = PkWall.EMPTY;
+
+        // Remplir la première ligne
+        for(TileKind.Colored c : TileKind.Colored.ALL) {
+            wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, c);
+        }
+        assertTrue(PkWall.isRowFull(wall, TileDestination.Pattern.PATTERN_1));
+        assertTrue(PkWall.hasFullRow(wall));
+        assertFalse(PkWall.isRowFull(wall, TileDestination.Pattern.PATTERN_2));
+
+        // Remplir la colonne 0
+        int wallCol = PkWall.EMPTY;
+        wallCol = PkWall.withTileAt(wallCol, TileDestination.Pattern.PATTERN_1, TileKind.Colored.A);
+        wallCol = PkWall.withTileAt(wallCol, TileDestination.Pattern.PATTERN_2, TileKind.Colored.E);
+        wallCol = PkWall.withTileAt(wallCol, TileDestination.Pattern.PATTERN_3, TileKind.Colored.D);
+        wallCol = PkWall.withTileAt(wallCol, TileDestination.Pattern.PATTERN_4, TileKind.Colored.C);
+        wallCol = PkWall.withTileAt(wallCol, TileDestination.Pattern.PATTERN_5, TileKind.Colored.B);
+        assertTrue(PkWall.isColumnFull(wallCol, 0));
+        assertFalse(PkWall.isColumnFull(wallCol, 1));
+    }
+
+    @Test
+    void pkWallToStringWorksOnKnownCases() {
+        assertEquals("[abcde, eabcd, deabc, cdeab, bcdea]", PkWall.toString(PkWall.EMPTY));
+
+        // Mur de l'exemple Figure 4
+        int wall = PkWall.EMPTY;
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.A);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.C);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, TileKind.Colored.D);
+
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_2, TileKind.Colored.A);
+
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_3, TileKind.Colored.E);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_3, TileKind.Colored.B);
+
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_4, TileKind.Colored.A);
+
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.B);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.C);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.D);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.E);
+        wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_5, TileKind.Colored.A);
+
+        assertEquals("[AbCDe, eAbcd, dEaBc, cdeAb, BCDEA]", PkWall.toString(wall));
+    }
 }
