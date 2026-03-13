@@ -102,4 +102,50 @@ public class MyPointsTest {
     void totalFloorPenalty_sevenTiles_returnsFourteen() {
         assertEquals(14, Points.totalFloorPenalty(7));
     }
+
+    @Test
+    void pointsConstantsAreCorrect() {
+        assertEquals(2, Points.FULL_ROW_BONUS_POINTS);
+        assertEquals(7, Points.FULL_COLUMN_BONUS_POINTS);
+        assertEquals(10, Points.FULL_COLOR_BONUS_POINTS);
+    }
+
+    @Test
+    void pointsNewWallTilePointsWorks() {
+        // Tuile isolée (les deux groupes valent 1)
+        assertEquals(1, Points.newWallTilePoints(1, 1));
+
+        // Tuile ajoutant uniquement à l'horizontal
+        assertEquals(4, Points.newWallTilePoints(4, 1));
+
+        // Tuile ajoutant uniquement au vertical
+        assertEquals(3, Points.newWallTilePoints(1, 3));
+
+        // Tuile connectant à la fois l'horizontal et le vertical
+        assertEquals(7, Points.newWallTilePoints(3, 4));
+        assertEquals(10, Points.newWallTilePoints(5, 5));
+    }
+
+    @Test
+    void pointsFloorPenaltyWorks() {
+        assertEquals(1, Points.floorPenalty(0));
+        assertEquals(1, Points.floorPenalty(1));
+        assertEquals(2, Points.floorPenalty(2));
+        assertEquals(2, Points.floorPenalty(3));
+        assertEquals(2, Points.floorPenalty(4));
+        assertEquals(3, Points.floorPenalty(5));
+        assertEquals(3, Points.floorPenalty(6));
+    }
+
+    @Test
+    void pointsTotalFloorPenaltyWorks() {
+        assertEquals(0, Points.totalFloorPenalty(0));
+        assertEquals(1, Points.totalFloorPenalty(1));
+        assertEquals(2, Points.totalFloorPenalty(2));  // 1+1
+        assertEquals(4, Points.totalFloorPenalty(3));  // 2+2
+        assertEquals(6, Points.totalFloorPenalty(4));  // 4+2
+        assertEquals(8, Points.totalFloorPenalty(5));  // 6+2
+        assertEquals(11, Points.totalFloorPenalty(6)); // 8+3
+        assertEquals(14, Points.totalFloorPenalty(7)); // 11+3
+    }
 }
