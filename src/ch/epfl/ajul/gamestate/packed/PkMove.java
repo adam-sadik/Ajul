@@ -32,7 +32,7 @@ public final class PkMove {
     /// @param source la source
     /// @param destination la destination
     /// @param color la couleur
-    /// @return le coup empaquetée correspondant
+    /// @return le coup empaqueté correspondant
     public static short pack(TileSource source, TileKind.Colored color, TileDestination destination) {
     int sourceIndex = source.index() << SOURCE_OFFSET;
     int colorIndex = color.index() << COLOR_OFFSET;

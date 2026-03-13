@@ -18,7 +18,8 @@ public final class Points {
     private static final int FLOOR_PENALTY = 0x3322211;
 
     /// Pénalités totales cumulées pour la ligne plancher, empaquetées.
-    private static final int TOTAL_FLOOR_PENALTY = 0xEB864210;
+    ///L'utilisation du type long ('L') évite l'overflow, avant le décalage et le cast en (int).
+    private static final int TOTAL_FLOOR_PENALTY = (int) ((FLOOR_PENALTY * 0x1111111L) << 4);
 
     /// Calcule les points obtenus lors de l'ajout d'une tuile au mur.
     /// @param hGroupSize Taille du groupe horizontal auquel appartient la tuile.
