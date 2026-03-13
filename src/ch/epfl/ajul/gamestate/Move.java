@@ -9,7 +9,7 @@ import java.util.Objects;
 
 /// Représente un coup joué par un joueur d'Azul.
 /// @param destination la destination sur laquelle les tuiles sont placées
-/// @param source la source dpeuis laquelle les sources ont été prises
+/// @param source la source depuis laquelle les sources ont été prises
 /// @param tileColor la couleur des tuiles choisies
 /// @author Rayane TAOUFIK BENCHEKROUN (412052)
 public record Move(TileSource source, TileKind.Colored tileColor, TileDestination destination) {
