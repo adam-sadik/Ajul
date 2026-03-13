@@ -111,6 +111,7 @@ public final class Game {
         }
 
         /// Représente le type d'un joueur.
+        /// @author Rayane TAOUFIK BENCHEKROUN (412052)
         public enum PlayerKind {
             HUMAN, AI
         }
