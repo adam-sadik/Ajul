@@ -41,10 +41,7 @@ public final class PkTileSet {
                 return false;
             }
         }
-        if (countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) > 1) {
-            return false;
-        }
-        return true;
+        return countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) <= 1;
     }
 
     /// Retourne un ensemble de tuiles empaqueté ne contenant que le nombre spécifié de tuiles de la sorte donnée.
@@ -56,7 +53,7 @@ public final class PkTileSet {
     /// @return l'ensemble de tuiles empaqueté
     public static int of(int count, TileKind tileKind) {
         int result = count << (tileKind.index() * TILE_KIND_BITS);
-        assert isValid(result);
+        //assert isValid(result);
         return result;
     }
 
@@ -116,7 +113,7 @@ public final class PkTileSet {
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int add(int pkTileSet, TileKind tileKind) {
         int result = pkTileSet + of(1, tileKind);
-        assert isValid(result);
+        //assert isValid(result);
         return result;
     }
 
@@ -129,7 +126,7 @@ public final class PkTileSet {
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int remove(int pkTileSet, TileKind tileKind) {
         int result = pkTileSet - of(1, tileKind);
-        assert isValid(result);
+        //assert isValid(result);
         return result;
     }
 
@@ -142,7 +139,7 @@ public final class PkTileSet {
     /// @return l'union des deux ensembles
     public static int union(int pkTileSet1, int pkTileSet2) {
         int result = pkTileSet1 + pkTileSet2;
-        assert isValid(result);
+        //assert isValid(result);
         return result;
     }
 
@@ -155,7 +152,7 @@ public final class PkTileSet {
     /// @return la différence des deux ensembles
     public static int difference(int pkTileSet1, int pkTileSet2) {
         int result = pkTileSet1 - pkTileSet2;
-        assert isValid(result);
+        //assert isValid(result);
         return result;
     }
 

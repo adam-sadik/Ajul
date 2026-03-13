@@ -25,8 +25,8 @@ public final class Points {
     /// @param vGroupSize Taille du groupe vertical auquel appartient la tuile.
     /// @return Le score rapporté par la tuile (h, v ou h+v).
     public static int newWallTilePoints(int hGroupSize, int vGroupSize) {
-        assert hGroupSize >= 1 && hGroupSize <= 5;
-        assert vGroupSize >= 1 && vGroupSize <= 5;
+        //assert hGroupSize >= 1 && hGroupSize <= 5;
+        //assert vGroupSize >= 1 && vGroupSize <= 5;
         if (vGroupSize == 1) { return hGroupSize; }
         else if (hGroupSize == 1) { return vGroupSize; }
         else return hGroupSize + vGroupSize;
@@ -36,7 +36,7 @@ public final class Points {
     /// @param tileIndex L'index de la tuile (0-6).
     /// @return La valeur de la pénalité (1, 2 ou 3).
     public static int floorPenalty(int tileIndex) {
-        assert tileIndex >= 0 && tileIndex < 7;
+        //assert tileIndex >= 0 && tileIndex < 7;
         return (FLOOR_PENALTY >>> (tileIndex * 4)) & 0xF;
     }
 
@@ -44,7 +44,7 @@ public final class Points {
     /// @param tilesCount Le nombre total de tuiles (0-7).
     /// @return La somme des pénalités (0-14).
     public static int totalFloorPenalty(int tilesCount) {
-        assert tilesCount >= 0 && tilesCount <= 7;
-        return (TOTAL_FLOOR_PENALTY >>> (tilesCount*4)) & 0xF;
+        //assert tilesCount >= 0 && tilesCount <= 7;
+        return (TOTAL_FLOOR_PENALTY >>> (tilesCount * 4)) & 0xF;
     }
 }

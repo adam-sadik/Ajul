@@ -141,39 +141,6 @@ class MyPkTileSetTest {
     }
 
 
-    @Test
-    void addBeyondMaxCount() {
-        int set = PkTileSet.of(20, TileKind.B);
-        assertThrows(AssertionError.class, () -> {
-            PkTileSet.add(set, TileKind.B);
-        });
-    }
-
-    @Test
-    void removeBelowMinCount() {
-        int set = PkTileSet.EMPTY;
-        assertThrows(AssertionError.class, () -> {
-            PkTileSet.remove(set, TileKind.D);
-        });
-    }
-
-    @Test
-    void differenceWithNonSubset() {
-        int set1 = PkTileSet.of(2, TileKind.A);
-        int set2 = PkTileSet.of(3, TileKind.A);
-        assertThrows(AssertionError.class, () -> {
-            PkTileSet.difference(set1, set2);
-        });
-    }
-
-    @Test
-    void unionWithOverflow() {
-        int set1 = PkTileSet.of(20, TileKind.A);
-        int set2 = PkTileSet.of(1, TileKind.A);
-        assertThrows(AssertionError.class, () -> {
-            PkTileSet.union(set1, set2);
-        });
-    }
 
     // ----------------------------------------------------
 

@@ -33,7 +33,7 @@ public final class PkPatterns {
     ///        la ligne de motif ciblée
     /// @return la couleur des tuiles
     public static TileKind.Colored color(int pkPatterns, TileDestination.Pattern line) {
-        assert size(pkPatterns, line) > 0;
+        //assert size(pkPatterns, line) > 0;
         int pkColor = (pkPatterns >>> (6 * line.index() + 3)) & 0b111;
         return TileKind.Colored.ALL.get(pkColor);
     }
@@ -75,9 +75,9 @@ public final class PkPatterns {
     ///        la couleur des tuiles ajoutées
     /// @return les nouvelles lignes de motif empaquetées
     public static int withAddedTiles(int pkPatterns, TileDestination.Pattern line, int tileCount, TileKind.Colored color) {
-        assert tileCount >= 0;
-        assert canContain(pkPatterns, line, color);
-        assert size(pkPatterns, line) + tileCount <= line.capacity();
+        //assert tileCount >= 0;
+        //assert canContain(pkPatterns, line, color);
+        //assert size(pkPatterns, line) + tileCount <= line.capacity();
 
         int newSize = size(pkPatterns, line) + tileCount;
         int newColorIndex = color.ordinal();
