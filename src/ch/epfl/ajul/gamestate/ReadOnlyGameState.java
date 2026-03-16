@@ -7,37 +7,76 @@ import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
 import java.util.List;
 
+/// Représente l'état complet d'une partie d'Ajul en lecture seule.
+/// @author Rayane Taoufik Benchekroun (412052)
+/// @author Adam Ghali SADIK (412029)
 public interface ReadOnlyGameState {
 
+    /// Retourne la configuration de la partie.
+    ///
+    /// @return la configuration de la partie
     Game game();
 
+    /// Retourne le contenu du sac duquel les tuiles sont extraites pour remplir les fabriques.
+    ///
+    /// @return l'ensemble empaqueté des tuiles contenues dans le sac
     int pkTileBag();
 
+    /// Retourne un tableau décrivant le contenu des sources de tuiles.
+    /// L'élément à l'index `i` correspond à l'ensemble de tuiles empaqueté de la source d'index `i`.
+    ///
+    /// @return le tableau en lecture seule des sources de tuiles
     ReadOnlyIntArray pkTileSources();
 
+    /// Retourne l'ensemble empaqueté des index des sources de tuiles uniques.
+    /// Une source est unique si elle contient au moins une tuile colorée et n'a pas
+    /// le même contenu qu'une fabrique qui la précède.
+    ///
+    /// @return l'ensemble empaqueté des index des sources uniques
     int pkUniqueTileSources();
 
+    /// Retourne un tableau contenant les états empaquetés des joueurs.
+    ///
+    /// @return le tableau en lecture seule des états des joueurs
     ReadOnlyIntArray pkPlayerStates();
 
+    /// Retourne l'identité du joueur courant.
+    ///
+    /// @return l'identité du joueur devant jouer le prochain coup
     PlayerId currentPlayerId();
 
+    /// Retourne une version immuable de l'état de la partie auquel on l'applique.
+    ///
+    /// @return l'état de la partie sous forme immuable
     default ImmutableGameState immutable() {
         return new ImmutableGameState(game(),
                 pkTileBag(),
-                (ImmutableIntArray) pkTileSources(),
+                ImmutableIntArray.copyOf(pkTileSources().toArray()),
                 pkUniqueTileSources(),
-                (ImmutableIntArray) pkPlayerStates(),
+                ImmutableIntArray.copyOf(pkPlayerStates().toArray()),
                 currentPlayerId());
     }
 
+    /// Retourne la liste des identités des joueurs de la partie.
+    ///
+    /// @return la liste des identités des joueurs
     default List<PlayerId> playerIds() {
         return game().playerIds();
     }
 
+    /// Détermine si la manche en cours est terminée.
+    /// La manche est terminée si aucune source de tuile ne contient de tuile colorée.
+    ///
+    /// @return `true` si la manche est terminée, `false` sinon
     default boolean isRoundOver() {
         return pkUniqueTileSources() == PkIntSet32.EMPTY;
     }
 
+    /// Détermine si la partie est terminée.
+    /// La partie est terminée si la manche est terminée et qu'au moins un joueur
+    /// possède une ligne horizontale complète dans son mur.
+    ///
+    /// @return `true` si la partie est terminée, `false` sinon
     default boolean isGameOver() {
         boolean isRowFull = false;
         for (int i = 0; i < playerIds().size(); ++i) {
@@ -49,39 +88,26 @@ public interface ReadOnlyGameState {
         return isRoundOver() && isRowFull;
     }
 
+    /// Calcule et retourne l'ensemble empaqueté des tuiles sorties du jeu.
+    ///
+    /// @return l'ensemble empaqueté des tuiles défaussées
     default int pkDiscardedTiles() {
 
-        int sources = PkTileSet.EMPTY;
-        int wall = PkTileSet.EMPTY;
-        int floor = PkTileSet.EMPTY;
-        int patterns = PkTileSet.EMPTY;
-        int patternsAndFloor;
-        int unionBagAndSources;
-        int unionWallAndPatternsAndFloor;
-        int total;
+        int total = pkTileBag();
 
         for (int i = 0; i < pkTileSources().size(); ++i) {
-            sources = PkTileSet.union(sources, pkTileSources().get(i));
+            total = PkTileSet.union(total, pkTileSources().get(i));
         }
 
-        unionBagAndSources = PkTileSet.union(pkTileBag(), sources);
+        for ( PlayerId p : playerIds()) {
+            int patterns = PkPlayerStates.pkPatterns(pkPlayerStates(), p);
+            int floor = PkPlayerStates.pkFloor(pkPlayerStates(), p);
+            int wall = PkPlayerStates.pkWall(pkPlayerStates(), p);
 
-        for (int i = 0; i < playerIds().size(); ++i) {
-            floor = PkTileSet.union(floor, PkPlayerStates.pkPatterns(pkPlayerStates(), PlayerId.ALL.get(i)));
+            total = PkTileSet.union(total, PkPatterns.asPkTileSet(patterns));
+            total = PkTileSet.union(total, PkFloor.asPkTileSet(floor));
+            total = PkTileSet.union(total, PkWall.asPkTileSet(wall));
         }
-
-        for (int i = 0; i < playerIds().size(); i++) {
-            patterns = PkTileSet.union(patterns, PkPlayerStates.pkFloor(pkPlayerStates(), PlayerId.ALL.get(i)));
-        }
-
-        patternsAndFloor = PkTileSet.union(floor, patterns);
-
-        for (int i = 0; i < playerIds().size(); i++) {
-            wall = PkTileSet.union(wall, PkPlayerStates.pkWall(pkPlayerStates(), PlayerId.ALL.get(i)));
-        }
-
-        unionWallAndPatternsAndFloor = PkTileSet.union(wall, patternsAndFloor);
-        total = PkTileSet.union(unionBagAndSources, unionWallAndPatternsAndFloor);
 
         return PkTileSet.difference(PkTileSet.FULL, total);
     }
@@ -93,6 +119,11 @@ public interface ReadOnlyGameState {
         int myWall = PkPlayerStates.pkWall(pkPlayerStates(), me);
 
         for (TileSource source : TileSource.ALL) {
+
+            if (source.index() >= pkTileSources().size()) {
+                continue;
+            }
+
             if (PkIntSet32.contains(allowedSources, source.index())) {
                 int sourceTiles = pkTileSources().get(source.index());
                 for (TileKind.Colored color : TileKind.Colored.ALL) {
@@ -115,14 +146,24 @@ public interface ReadOnlyGameState {
         return i;
     }
 
+    /// Calcule tous les coups que le joueur courant a le droit de jouer depuis toutes les sources,
+    /// les place dans le tableau `destination` et retourne leur nombre.
+    ///
+    /// @param destination le tableau (de taille au moins Move.MAX_MOVES) recevant les coups empaquetés
+    /// @return le nombre de coups valides placés dans le tableau
     default int validMoves(short[] destination) {
         int allSources = PkIntSet32.EMPTY;
-        for (TileSource source : TileSource.ALL) {
-            allSources = PkIntSet32.add(allSources, source.index());
+        for (int i = 0; i < pkTileSources().size(); i++) {
+            allSources = PkIntSet32.add(allSources, i);
         }
         return generateMoves(allSources, destination);
     }
 
+    /// Calcule tous les coups que le joueur courant a le droit de jouer depuis les sources *uniques*,
+    /// les place dans le tableau `destination` et retourne leur nombre.
+    ///
+    /// @param destination le tableau (de taille au moins Move.MAX_MOVES) recevant les coups empaquetés
+    /// @return le nombre de coups valides uniques placés dans le tableau
     default int uniqueValidMoves(short[] destination) {
         return generateMoves(pkUniqueTileSources(), destination);
     }
