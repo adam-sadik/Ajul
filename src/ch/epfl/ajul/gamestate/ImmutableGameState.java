@@ -37,10 +37,10 @@ public record ImmutableGameState(Game game, int pkTileBag, ImmutableIntArray pkT
     /// @return le statut de jeu immuable initial
     public static ImmutableGameState initial(Game game){
         int[] sourcesArray = new int[TileSource.ALL.size()];
-        sourcesArray[0] =PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+        sourcesArray[0] = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
         ImmutableIntArray immutableArray = ImmutableIntArray.copyOf(sourcesArray);
-
-        return new ImmutableGameState(game, PkTileSet.FULL_COLORED, immutableArray , PkIntSet32.EMPTY, PkPlayerStates.initial(game), PlayerId.P1);
+        PlayerId firstPlayer = game.playerIds().get(0);
+        return new ImmutableGameState(game, PkTileSet.FULL_COLORED, immutableArray, PkIntSet32.EMPTY, PkPlayerStates.initial(game), firstPlayer);
     }
 
     /// Retourne le récepteur (this) puisqu'il est déjà immuable.

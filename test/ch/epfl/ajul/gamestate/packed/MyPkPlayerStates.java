@@ -1,9 +1,11 @@
 package ch.epfl.ajul.gamestate.packed;
 
+import ch.epfl.ajul.Game;
 import ch.epfl.ajul.PlayerId;
 import ch.epfl.ajul.intarray.ImmutableIntArray;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.random.RandomGeneratorFactory;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -325,4 +327,175 @@ public class MyPkPlayerStates {
             assertEquals(totalExpected, array[p.ordinal() * 4 + 3]);
         }
     }
+
+    private Game game4Players() {
+        return new Game(List.of(
+                new Game.PlayerDescription(PlayerId.ALL.get(0), "Alice", Game.PlayerDescription.PlayerKind.HUMAN),
+                new Game.PlayerDescription(PlayerId.ALL.get(1), "Bob", Game.PlayerDescription.PlayerKind.AI),
+                new Game.PlayerDescription(PlayerId.ALL.get(2), "Charlie", Game.PlayerDescription.PlayerKind.AI),
+                new Game.PlayerDescription(PlayerId.ALL.get(3), "Diana", Game.PlayerDescription.PlayerKind.AI)
+        ));
+    }
+
+    @Test
+    void initialCreatesCorrectArraySizeAndValues() {
+        // On utilise la partie à 4 joueurs pour avoir 4 * 4 = 16 éléments
+        Game game = game4Players();
+        ImmutableIntArray initialStates = PkPlayerStates.initial(game);
+
+        assertEquals(16, initialStates.size(), "Pour 4 joueurs, le tableau doit faire 4*4 = 16 éléments");
+
+        for (int i = 0; i < 16; i++) {
+            assertEquals(0, initialStates.get(i), "L'état initial doit être rempli de zéros");
+        }
+    }
+
+    @Test
+    void settersAndGettersDoNotInterfereBetweenPlayers() {
+        int[] states = new int[16]; // Simulation de 4 joueurs
+
+        // On assigne des valeurs TRÈS spécifiques pour P1 et P4
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(0), 0b101010);
+        PkPlayerStates.setPkFloor(states, PlayerId.ALL.get(0), 0b111111);
+        PkPlayerStates.setPkWall(states, PlayerId.ALL.get(0), 0b000001);
+
+        // Index de P4 = 3
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(3), 0b111000);
+        PkPlayerStates.setPkFloor(states, PlayerId.ALL.get(3), 0b000111);
+        PkPlayerStates.setPkWall(states, PlayerId.ALL.get(3), 0b111111);
+
+        ImmutableIntArray readOnlyStates = ImmutableIntArray.copyOf(states);
+
+        // Vérification P1 (Index 0)
+        assertEquals(0b101010, PkPlayerStates.pkPatterns(readOnlyStates, PlayerId.ALL.get(0)));
+        assertEquals(0b111111, PkPlayerStates.pkFloor(readOnlyStates, PlayerId.ALL.get(0)));
+        assertEquals(0b000001, PkPlayerStates.pkWall(readOnlyStates, PlayerId.ALL.get(0)));
+
+        // Vérification P4 (Index 3) (doit être intact et à la bonne place)
+        assertEquals(0b111000, PkPlayerStates.pkPatterns(readOnlyStates, PlayerId.ALL.get(3)));
+        assertEquals(0b000111, PkPlayerStates.pkFloor(readOnlyStates, PlayerId.ALL.get(3)));
+        assertEquals(0b111111, PkPlayerStates.pkWall(readOnlyStates, PlayerId.ALL.get(3)));
+
+        // Vérification P2 et P3 (doivent être restés à 0, pas d'écrasement)
+        assertEquals(0, PkPlayerStates.pkPatterns(readOnlyStates, PlayerId.ALL.get(1)));
+        assertEquals(0, PkPlayerStates.pkWall(readOnlyStates, PlayerId.ALL.get(2)));
+    }
+
+    @Test
+    void addPointsWorksWithPossitiveAndNegativeValues() {
+        int[] states = new int[8]; // Simulation de 2 joueurs
+
+        // Test addition simple sur P1
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), 10);
+        ImmutableIntArray read1 = ImmutableIntArray.copyOf(states);
+        assertEquals(10, PkPlayerStates.points(read1, PlayerId.ALL.get(0)));
+
+        // Test cumul sur P1
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), 15);
+        ImmutableIntArray read2 = ImmutableIntArray.copyOf(states);
+        assertEquals(25, PkPlayerStates.points(read2, PlayerId.ALL.get(0)));
+
+        // Test points négatifs (pénalités du plancher) sur P1
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), -5);
+        ImmutableIntArray read3 = ImmutableIntArray.copyOf(states);
+        assertEquals(20, PkPlayerStates.points(read3, PlayerId.ALL.get(0)));
+
+        // P2 ne doit pas avoir été impacté
+        assertEquals(0, PkPlayerStates.points(read3, PlayerId.ALL.get(1)));
+    }
+
+    private Game game2Players() {
+        return new Game(List.of(
+                new Game.PlayerDescription(PlayerId.ALL.get(0), "Alice", Game.PlayerDescription.PlayerKind.HUMAN),
+                new Game.PlayerDescription(PlayerId.ALL.get(1), "Bob", Game.PlayerDescription.PlayerKind.AI)
+        ));
+    }
+
+    @Test
+    void initialStateHasCorrectSizeFor2Players() {
+        ImmutableIntArray states = PkPlayerStates.initial(game2Players());
+        assertEquals(8, states.size(), "2 joueurs = 8 entiers");
+    }
+
+    @Test
+    void initialStateHasCorrectSizeFor4Players() {
+        ImmutableIntArray states = PkPlayerStates.initial(game4Players());
+        assertEquals(16, states.size(), "4 joueurs = 16 entiers");
+    }
+
+    @Test
+    void setAndGetPatternsWorksForAllPlayersIndependently() {
+        int[] states = new int[16]; // 4 joueurs
+
+        // Valeurs arbitraires complexes (bits alternés)
+        int pat0 = 0b1010101010;
+        int pat1 = 0b0101010101;
+        int pat2 = 0b1111000011;
+        int pat3 = 0b0000111100;
+
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(0), pat0);
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(1), pat1);
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(2), pat2);
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(3), pat3);
+
+        ImmutableIntArray read = ImmutableIntArray.copyOf(states);
+
+        assertEquals(pat0, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(0)));
+        assertEquals(pat1, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(1)));
+        assertEquals(pat2, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(2)));
+        assertEquals(pat3, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(3)));
+
+        // Vérifier que les autres champs (floor, wall, points) sont toujours à 0
+        assertEquals(0, PkPlayerStates.pkFloor(read, PlayerId.ALL.get(1)));
+        assertEquals(0, PkPlayerStates.points(read, PlayerId.ALL.get(3)));
+    }
+
+    @Test
+    void pointsCanReachTheoreticalMaximumAndBeyond() {
+        int[] states = new int[8];
+
+        // Ajul a un max théorique d'environ 240, testons cette limite et au-delà
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), 240);
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(1), 500);
+
+        ImmutableIntArray read = ImmutableIntArray.copyOf(states);
+        assertEquals(240, PkPlayerStates.points(read, PlayerId.ALL.get(0)));
+        assertEquals(500, PkPlayerStates.points(read, PlayerId.ALL.get(1)));
+    }
+
+    @Test
+    void pointsCanGoNegative() {
+        int[] states = new int[8];
+
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), 10);
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(0), -24); // Chute brutale
+
+        ImmutableIntArray read = ImmutableIntArray.copyOf(states);
+        assertEquals(-14, PkPlayerStates.points(read, PlayerId.ALL.get(0)));
+    }
+
+    @Test
+    void completeStateUpdateForOnePlayerDoesNotCorruptOthers() {
+        int[] states = new int[16];
+
+        // On bourre l'état du joueur 2 (index 2)
+        PkPlayerStates.setPkPatterns(states, PlayerId.ALL.get(2), Integer.MAX_VALUE);
+        PkPlayerStates.setPkFloor(states, PlayerId.ALL.get(2), Integer.MAX_VALUE);
+        PkPlayerStates.setPkWall(states, PlayerId.ALL.get(2), Integer.MAX_VALUE);
+        PkPlayerStates.addPoints(states, PlayerId.ALL.get(2), Integer.MAX_VALUE);
+
+        ImmutableIntArray read = ImmutableIntArray.copyOf(states);
+
+        // Vérification des voisins : Joueur 1 (index 1) et Joueur 3 (index 3)
+        assertEquals(0, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(1)));
+        assertEquals(0, PkPlayerStates.pkFloor(read, PlayerId.ALL.get(1)));
+        assertEquals(0, PkPlayerStates.pkWall(read, PlayerId.ALL.get(1)));
+        assertEquals(0, PkPlayerStates.points(read, PlayerId.ALL.get(1)));
+
+        assertEquals(0, PkPlayerStates.pkPatterns(read, PlayerId.ALL.get(3)));
+        assertEquals(0, PkPlayerStates.pkFloor(read, PlayerId.ALL.get(3)));
+        assertEquals(0, PkPlayerStates.pkWall(read, PlayerId.ALL.get(3)));
+        assertEquals(0, PkPlayerStates.points(read, PlayerId.ALL.get(3)));
+    }
 }
+

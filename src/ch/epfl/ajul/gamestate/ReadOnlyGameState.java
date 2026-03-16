@@ -79,6 +79,9 @@ public interface ReadOnlyGameState {
     /// @return `true` si la partie est terminée, `false` sinon
     default boolean isGameOver() {
         boolean isRowFull = false;
+        if (!isRoundOver()) {
+            return false;
+        }
         for (int i = 0; i < playerIds().size(); ++i) {
             if (PkWall.hasFullRow(PkPlayerStates.pkWall(pkPlayerStates(), PlayerId.ALL.get(i)))) {
                 isRowFull = true;
@@ -99,7 +102,7 @@ public interface ReadOnlyGameState {
             total = PkTileSet.union(total, pkTileSources().get(i));
         }
 
-        for ( PlayerId p : playerIds()) {
+        for (PlayerId p : playerIds()) {
             int patterns = PkPlayerStates.pkPatterns(pkPlayerStates(), p);
             int floor = PkPlayerStates.pkFloor(pkPlayerStates(), p);
             int wall = PkPlayerStates.pkWall(pkPlayerStates(), p);
