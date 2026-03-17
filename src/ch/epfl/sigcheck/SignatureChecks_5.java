@@ -5,6 +5,8 @@ package ch.epfl.sigcheck;
 // que les noms et les types des différentes entités à définir pour cette
 // étape du projet sont corrects.
 
+import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
+
 final class SignatureChecks_5 {
     private SignatureChecks_5() {}
 
@@ -26,16 +28,16 @@ final class SignatureChecks_5 {
     }
 
     void checkPkPlayerStates() {
-        v09 = new ch.epfl.ajul.gamestate.packed.PkPlayerStates();
-        ch.epfl.ajul.gamestate.packed.PkPlayerStates.addPoints(v10, v06, v04);
-        v05 = ch.epfl.ajul.gamestate.packed.PkPlayerStates.initial(v03);
-        v04 = ch.epfl.ajul.gamestate.packed.PkPlayerStates.pkFloor(v11, v06);
-        v04 = ch.epfl.ajul.gamestate.packed.PkPlayerStates.pkPatterns(v11, v06);
-        v04 = ch.epfl.ajul.gamestate.packed.PkPlayerStates.pkWall(v11, v06);
-        v04 = ch.epfl.ajul.gamestate.packed.PkPlayerStates.points(v11, v06);
-        ch.epfl.ajul.gamestate.packed.PkPlayerStates.setPkFloor(v10, v06, v04);
-        ch.epfl.ajul.gamestate.packed.PkPlayerStates.setPkPatterns(v10, v06, v04);
-        ch.epfl.ajul.gamestate.packed.PkPlayerStates.setPkWall(v10, v06, v04);
+        v09 = new PkPlayerStates();
+        PkPlayerStates.addPoints(v10, v06, v04);
+        v05 = PkPlayerStates.initial(v03);
+        v04 = PkPlayerStates.pkFloor(v11, v06);
+        v04 = PkPlayerStates.pkPatterns(v11, v06);
+        v04 = PkPlayerStates.pkWall(v11, v06);
+        v04 = PkPlayerStates.points(v11, v06);
+        PkPlayerStates.setPkFloor(v10, v06, v04);
+        PkPlayerStates.setPkPatterns(v10, v06, v04);
+        PkPlayerStates.setPkWall(v10, v06, v04);
     }
 
     void checkReadOnlyGameState() {
@@ -62,7 +64,7 @@ final class SignatureChecks_5 {
     ch.epfl.ajul.PlayerId v06;
     boolean v07;
     String v08;
-    ch.epfl.ajul.gamestate.packed.PkPlayerStates v09;
+    PkPlayerStates v09;
     int[] v10;
     ch.epfl.ajul.intarray.ReadOnlyIntArray v11;
     ch.epfl.ajul.gamestate.ReadOnlyGameState v12;

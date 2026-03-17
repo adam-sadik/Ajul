@@ -3,6 +3,7 @@ package ch.epfl.ajul.gamestate.packed;
 import ch.epfl.ajul.Game;
 import ch.epfl.ajul.PlayerId;
 import ch.epfl.ajul.intarray.ImmutableIntArray;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class MyPkPlayerStates {
 
         for (PlayerId player : PlayerId.values()) {
             int baseIndex = 4 * player.ordinal();
-            assertEquals((baseIndex + 1) * 10, PkPlayerStates.pkPatterns(readOnlyArray, player));
+            Assertions.assertEquals((baseIndex + 1) * 10, PkPlayerStates.pkPatterns(readOnlyArray, player));
             assertEquals((baseIndex + 2) * 10, PkPlayerStates.pkFloor(readOnlyArray, player));
             assertEquals((baseIndex + 3) * 10, PkPlayerStates.pkWall(readOnlyArray, player));
             assertEquals((baseIndex + 4) * 10, PkPlayerStates.points(readOnlyArray, player));

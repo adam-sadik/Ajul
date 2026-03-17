@@ -3,6 +3,7 @@ package ch.epfl.ajul.gamestate.packed;
 import ch.epfl.ajul.TileDestination;
 import ch.epfl.ajul.TileKind;
 import ch.epfl.ajul.TileSource;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,7 +19,7 @@ class PkMoveTest {
                 var pkDestinationColor = (pkDestination << 3) | color.index();
                 for (var source : TileSource.ALL) {
                     var pkMove = (pkDestinationColor << 4) | source.index();
-                    assertEquals(pkMove, PkMove.pack(source, color, destination));
+                    Assertions.assertEquals(pkMove, PkMove.pack(source, color, destination));
                     remainingCases -= 1;
                 }
             }

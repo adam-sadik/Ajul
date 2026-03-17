@@ -1,4 +1,5 @@
 package ch.epfl.ajul.gamestate.packed;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.random.RandomGeneratorFactory;
@@ -9,7 +10,7 @@ public class MyPkIntSet32Test {
     @Test
     void emptySetContainsNothing() {
         for (int i = 0; i < 32; i++) {
-            assertFalse(PkIntSet32.contains(PkIntSet32.EMPTY, i));
+            Assertions.assertFalse(PkIntSet32.contains(PkIntSet32.EMPTY, i));
         }
     }
 

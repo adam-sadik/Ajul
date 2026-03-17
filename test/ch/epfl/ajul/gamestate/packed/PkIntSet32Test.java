@@ -1,5 +1,6 @@
 package ch.epfl.ajul.gamestate.packed;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.random.RandomGeneratorFactory;
@@ -9,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PkIntSet32Test {
     @Test
     void pkIntSet32EmptyIsDefinedCorrectly() {
-        assertEquals(0, PkIntSet32.EMPTY);
+        Assertions.assertEquals(0, PkIntSet32.EMPTY);
     }
 
     @Test

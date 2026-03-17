@@ -1,6 +1,7 @@
 package ch.epfl.ajul.gamestate.packed;
 
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -20,7 +21,7 @@ class PkTileSetTest {
 
     @Test
     void pkTileSetConstantsAreCorrectlyDefined() {
-        assertEquals(0, PkTileSet.EMPTY);
+        Assertions.assertEquals(0, PkTileSet.EMPTY);
         assertEquals(0b00_010100_010100_010100_010100_010100, PkTileSet.FULL_COLORED);
         assertEquals(0b01_010100_010100_010100_010100_010100, PkTileSet.FULL);
     }

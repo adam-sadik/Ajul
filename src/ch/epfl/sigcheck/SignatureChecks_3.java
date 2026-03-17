@@ -5,31 +5,34 @@ package ch.epfl.sigcheck;
 // que les noms et les types des différentes entités à définir pour cette
 // étape du projet sont corrects.
 
+import ch.epfl.ajul.gamestate.packed.PkFloor;
+import ch.epfl.ajul.gamestate.packed.PkPatterns;
+
 final class SignatureChecks_3 {
     private SignatureChecks_3() {}
 
     void checkPkPatterns() {
-        v01 = new ch.epfl.ajul.gamestate.packed.PkPatterns();
-        v02 = ch.epfl.ajul.gamestate.packed.PkPatterns.EMPTY;
-        v02 = ch.epfl.ajul.gamestate.packed.PkPatterns.asPkTileSet(v02);
-        v05 = ch.epfl.ajul.gamestate.packed.PkPatterns.canContain(v02, v03, v04);
-        v04 = ch.epfl.ajul.gamestate.packed.PkPatterns.color(v02, v03);
-        v05 = ch.epfl.ajul.gamestate.packed.PkPatterns.isFull(v02, v03);
-        v02 = ch.epfl.ajul.gamestate.packed.PkPatterns.size(v02, v03);
-        v06 = ch.epfl.ajul.gamestate.packed.PkPatterns.toString(v02);
-        v02 = ch.epfl.ajul.gamestate.packed.PkPatterns.withAddedTiles(v02, v03, v02, v04);
-        v02 = ch.epfl.ajul.gamestate.packed.PkPatterns.withEmptyLine(v02, v03);
+        v01 = new PkPatterns();
+        v02 = PkPatterns.EMPTY;
+        v02 = PkPatterns.asPkTileSet(v02);
+        v05 = PkPatterns.canContain(v02, v03, v04);
+        v04 = PkPatterns.color(v02, v03);
+        v05 = PkPatterns.isFull(v02, v03);
+        v02 = PkPatterns.size(v02, v03);
+        v06 = PkPatterns.toString(v02);
+        v02 = PkPatterns.withAddedTiles(v02, v03, v02, v04);
+        v02 = PkPatterns.withEmptyLine(v02, v03);
     }
 
     void checkPkFloor() {
-        v07 = new ch.epfl.ajul.gamestate.packed.PkFloor();
-        v02 = ch.epfl.ajul.gamestate.packed.PkFloor.EMPTY;
-        v02 = ch.epfl.ajul.gamestate.packed.PkFloor.asPkTileSet(v02);
-        v05 = ch.epfl.ajul.gamestate.packed.PkFloor.containsFirstPlayerMarker(v02);
-        v02 = ch.epfl.ajul.gamestate.packed.PkFloor.size(v02);
-        v08 = ch.epfl.ajul.gamestate.packed.PkFloor.tileAt(v02, v02);
-        v06 = ch.epfl.ajul.gamestate.packed.PkFloor.toString(v02);
-        v02 = ch.epfl.ajul.gamestate.packed.PkFloor.withAddedTiles(v02, v02);
+        v07 = new PkFloor();
+        v02 = PkFloor.EMPTY;
+        v02 = PkFloor.asPkTileSet(v02);
+        v05 = PkFloor.containsFirstPlayerMarker(v02);
+        v02 = PkFloor.size(v02);
+        v08 = PkFloor.tileAt(v02, v02);
+        v06 = PkFloor.toString(v02);
+        v02 = PkFloor.withAddedTiles(v02, v02);
     }
 
     void checkPreconditions() {
@@ -68,13 +71,13 @@ final class SignatureChecks_3 {
         v19 = ch.epfl.ajul.Game.PlayerDescription.PlayerKind.values();
     }
 
-    ch.epfl.ajul.gamestate.packed.PkPatterns v01;
+    PkPatterns v01;
     int v02;
     ch.epfl.ajul.TileDestination.Pattern v03;
     ch.epfl.ajul.TileKind.Colored v04;
     boolean v05;
     String v06;
-    ch.epfl.ajul.gamestate.packed.PkFloor v07;
+    PkFloor v07;
     ch.epfl.ajul.TileKind v08;
     ch.epfl.ajul.Preconditions v09;
     ch.epfl.ajul.Game v10;

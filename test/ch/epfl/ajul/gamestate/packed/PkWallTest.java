@@ -3,6 +3,7 @@ package ch.epfl.ajul.gamestate.packed;
 import ch.epfl.ajul.TileDestination;
 import ch.epfl.ajul.TileDestination.Pattern;
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PkWallTest {
     @Test
     void pkWallConstantsAreCorrectlyDefined() {
-        assertEquals(0, PkWall.EMPTY);
+        Assertions.assertEquals(0, PkWall.EMPTY);
         assertEquals(5, PkWall.WALL_WIDTH);
         assertEquals(5, PkWall.WALL_HEIGHT);
     }
@@ -180,7 +181,7 @@ class PkWallTest {
 
     @Test
     void pkWallAsPkTileSetWorks() {
-        assertEquals(PkTileSet.EMPTY, PkWall.asPkTileSet(PkWall.EMPTY));
+        Assertions.assertEquals(PkTileSet.EMPTY, PkWall.asPkTileSet(PkWall.EMPTY));
 
         var rng = RandomGeneratorFactory.getDefault().create(2026);
         for (var i = 0; i < 1000; i += 1) {

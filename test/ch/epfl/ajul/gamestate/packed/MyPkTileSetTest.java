@@ -1,6 +1,7 @@
 package ch.epfl.ajul.gamestate.packed;
 
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -13,7 +14,7 @@ class MyPkTileSetTest {
 
     @Test
     void emptySetIsCorrectlyDefined() {
-        assertEquals(0, PkTileSet.EMPTY);
+        Assertions.assertEquals(0, PkTileSet.EMPTY);
         assertTrue(PkTileSet.isEmpty(PkTileSet.EMPTY));
         assertEquals(0, PkTileSet.size(PkTileSet.EMPTY));
     }

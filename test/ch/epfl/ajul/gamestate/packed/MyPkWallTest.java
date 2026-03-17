@@ -1,6 +1,7 @@
 package ch.epfl.ajul.gamestate.packed;
 import ch.epfl.ajul.TileDestination;
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.random.RandomGeneratorFactory;
@@ -10,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MyPkWallTest {
     @Test
     void emptyWallIsEmpty() {
-        assertEquals(0, PkWall.EMPTY);
+        Assertions.assertEquals(0, PkWall.EMPTY);
         assertFalse(PkWall.hasFullRow(PkWall.EMPTY));
         assertEquals("[abcde, eabcd, deabc, cdeab, bcdea]", PkWall.toString(PkWall.EMPTY));
     }
@@ -313,7 +314,7 @@ public class MyPkWallTest {
 
         int generatedSet = PkWall.asPkTileSet(wall);
 
-        assertEquals(1, PkTileSet.countOf(generatedSet, TileKind.Colored.A));
+        Assertions.assertEquals(1, PkTileSet.countOf(generatedSet, TileKind.Colored.A));
         assertEquals(0, PkTileSet.countOf(generatedSet, TileKind.Colored.B));
         assertEquals(1, PkTileSet.countOf(generatedSet, TileKind.Colored.C));
         assertEquals(2, PkTileSet.countOf(generatedSet, TileKind.Colored.D));

@@ -1,6 +1,7 @@
 package ch.epfl.ajul.gamestate.packed;
 
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,7 +10,7 @@ class MyPkFloorTest {
 
     @Test
     void testEmptyValueIsZero() {
-        assertEquals(0, PkFloor.EMPTY);
+        Assertions.assertEquals(0, PkFloor.EMPTY);
     }
 
     @Test

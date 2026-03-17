@@ -2,6 +2,7 @@ package ch.epfl.ajul.gamestate.packed;
 
 import ch.epfl.ajul.TileDestination;
 import ch.epfl.ajul.TileKind;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,7 +11,7 @@ class MyPkPatternsTest {
 
     @Test
     void testEmptyValueIsZero() {
-        assertEquals(0, PkPatterns.EMPTY);
+        Assertions.assertEquals(0, PkPatterns.EMPTY);
     }
 
     @Test
@@ -127,7 +128,7 @@ class MyPkPatternsTest {
 
     @Test
     void testAsPkTileSetOnEmptyPatterns() {
-        assertEquals(PkTileSet.EMPTY, PkPatterns.asPkTileSet(PkPatterns.EMPTY));
+        Assertions.assertEquals(PkTileSet.EMPTY, PkPatterns.asPkTileSet(PkPatterns.EMPTY));
     }
 
     @Test

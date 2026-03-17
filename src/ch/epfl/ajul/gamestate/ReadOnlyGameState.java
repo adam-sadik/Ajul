@@ -23,7 +23,7 @@ public interface ReadOnlyGameState {
     int pkTileBag();
 
     /// Retourne un tableau décrivant le contenu des sources de tuiles.
-    /// L'élément à l'index `i` correspond à l'ensemble de tuiles empaqueté de la source d'index `i`.
+    /// L'élément à l'index `i` correspond à l'ensemble de tuiles empaqueté de la source d'index `i'.
     ///
     /// @return le tableau en lecture seule des sources de tuiles
     ReadOnlyIntArray pkTileSources();

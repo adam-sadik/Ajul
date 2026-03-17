@@ -1,9 +1,11 @@
-package ch.epfl.ajul.gamestate.packed;
+package ch.epfl.ajul.gamestate;
 
 import ch.epfl.ajul.Game;
 import ch.epfl.ajul.PlayerId;
 import ch.epfl.ajul.TileKind;
-import ch.epfl.ajul.gamestate.ImmutableGameState;
+import ch.epfl.ajul.gamestate.packed.PkIntSet32;
+import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
+import ch.epfl.ajul.gamestate.packed.PkTileSet;
 import ch.epfl.ajul.intarray.ImmutableIntArray;
 import org.junit.jupiter.api.Test;
 
