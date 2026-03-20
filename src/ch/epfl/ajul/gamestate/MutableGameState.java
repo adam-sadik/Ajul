@@ -2,6 +2,7 @@ package ch.epfl.ajul.gamestate;
 
 import ch.epfl.ajul.*;
 import ch.epfl.ajul.gamestate.packed.PkMove;
+import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
 import ch.epfl.ajul.gamestate.packed.PkTileSet;
 import ch.epfl.ajul.intarray.MutableIntArray;
 import ch.epfl.ajul.intarray.ReadOnlyIntArray;
@@ -125,7 +126,7 @@ public final class MutableGameState implements ReadOnlyGameState  {
     public void registerMove(short pkMove){
 
         if (PkMove.source(pkMove) instanceof TileSource.Factory ){
-
+            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkMove.destination(pkMove).index());
         }
 
     }
