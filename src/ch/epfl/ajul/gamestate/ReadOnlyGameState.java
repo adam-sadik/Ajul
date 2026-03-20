@@ -101,7 +101,6 @@ public interface ReadOnlyGameState {
         for (int i = 0; i < pkTileSources().size(); ++i) {
             total = PkTileSet.union(total, pkTileSources().get(i));
         }
-
         for (PlayerId p : playerIds()) {
             int patterns = PkPlayerStates.pkPatterns(pkPlayerStates(), p);
             int floor = PkPlayerStates.pkFloor(pkPlayerStates(), p);
