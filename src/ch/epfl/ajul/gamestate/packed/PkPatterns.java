@@ -4,8 +4,13 @@ import ch.epfl.ajul.TileDestination;
 import ch.epfl.ajul.TileKind;
 import java.util.StringJoiner;
 
-/// Contient des méthodes statiques permettant de manipuler le contenu
-/// des lignes de motif d'un joueur, représentées de manière empaquetée.
+/// Contient des méthodes statiques permettant de manipuler le contenu des lignes de motif d'un joueur, à savoir:
+///
+/// les 3 bits de poids faible contiennent le nombre de tuiles présentes sur la ligne de motif 1,
+/// les 3 bits suivants contiennent l'index de la couleur des tuiles présentes sur la ligne de motif 1,
+/// ou 0 si la ligne de motif est vide,
+/// et ainsi de suite pour les lignes de motif 2 à 5,
+/// et les 2 bits de poids fort valent toujours 0.
 ///
 /// @author Adam Ghali SADIK (412029)
 public final class PkPatterns {

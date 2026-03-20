@@ -3,9 +3,12 @@ package ch.epfl.ajul.gamestate.packed;
 import ch.epfl.ajul.TileKind;
 import java.util.StringJoiner;
 
-/// Contient des méthodes statiques permettant de manipuler le contenu
-/// d'une ligne plancher empaquetée dans un entier de type int.
+/// Contient des méthodes statiques permettant de manipuler le contenu d'une ligne plancher empaqueté , à savoir:
 ///
+/// les 3 bits de poids faible contiennent le nombre de tuiles que contient la ligne plancher,
+/// les 3 bits suivants contiennent l'index de la première tuile se trouvant sur la ligne plancher, ou 0 s'il n'y en a aucune,
+/// et ainsi de suite pour les 6 autres tuiles qui peuvent se trouver sur la ligne plancher,
+/// et les 8 bits de poids fort valent toujours 0.
 /// @author Adam Ghali SADIK (412029)
 public final class PkFloor {
 
@@ -37,7 +40,8 @@ public final class PkFloor {
 
     /// Retourne une ligne plancher empaquetée identique à celle donnée, mais avec
     /// les tuiles de l'ensemble empaqueté ajoutées par ordre de sorte.
-    /// Les tuiles excédentaires sont ignorées, sauf le marqueur de premier joueur.
+    /// Les tuiles excédentaires sont ignorées, sauf le marqueur de premier joueur,
+    ///  qui doit toujours être ajouté, en remplaçant au besoin la dernière tuile,
     ///
     /// @param pkFloor
     ///        la ligne plancher empaquetée initiale

@@ -6,6 +6,14 @@ import ch.epfl.ajul.intarray.ImmutableIntArray;
 import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
 /// Contient des méthodes permettant de manipuler les états empaquetés de tous les joueurs d'une partie d'Ajul.
+/// Ces états empaquetés sont stockés dans un tableau de 4 n entiers, où n est le nombre de joueurs.
+///  Les 4 premiers éléments contiennent:
+///
+/// à l'index 0, le contenu des lignes de motif du premier joueur,
+/// à l'index 1, le contenu de la ligne plancher du premier joueur,
+/// à l'index 2, le contenu du mur du premier joueur,
+/// à l'index 3, le nombre de points du premier joueur.
+///
 /// @author Rayane Taoufik Benchekroun (412052)
 /// @author Adam Ghali SADIK (412029)
 public final class PkPlayerStates {

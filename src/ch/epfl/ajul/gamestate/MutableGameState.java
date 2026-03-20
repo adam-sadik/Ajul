@@ -1,9 +1,7 @@
 package ch.epfl.ajul.gamestate;
 
 import ch.epfl.ajul.*;
-import ch.epfl.ajul.gamestate.packed.PkMove;
-import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
-import ch.epfl.ajul.gamestate.packed.PkTileSet;
+import ch.epfl.ajul.gamestate.packed.*;
 import ch.epfl.ajul.intarray.MutableIntArray;
 import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
@@ -16,10 +14,10 @@ public final class MutableGameState implements ReadOnlyGameState  {
     private int pkTileBag;
     private final ReadOnlyIntArray pkTileSources;
     private final int[] pkTileSourcesEditable;
-    private final int pkUniqueTileSources;
+    private int pkUniqueTileSources;
     private final ReadOnlyIntArray pkPlayerStates;
     private final int[] pkPlayerStatesEditable;
-    private final PlayerId currentPlayerId;
+    private PlayerId currentPlayerId;
     private final PointsObserver pointsObserver;
 
     MutableGameState(ReadOnlyGameState initialState, PointsObserver pointsObserver) {
@@ -124,10 +122,98 @@ public final class MutableGameState implements ReadOnlyGameState  {
     }
 
     public void registerMove(short pkMove){
+        TileSource source = PkMove.source(pkMove);
+        TileKind.Colored color = PkMove.color(pkMove);
+        TileDestination destination = PkMove.destination(pkMove);
+        int countOfColor = PkTileSet.countOf(pkTileSources.get(source.index()),color);
+        int pkPatterns = PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId);
 
-        if (PkMove.source(pkMove) instanceof TileSource.Factory ){
-            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkMove.destination(pkMove).index());
+// Ne Rajoute pas les tuiles dans la destination
+        if (source instanceof TileSource.Factory) {
+            //PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkTileSet.add(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), PkMove.color(pkMove)));
+            for (int i = 0; i < TileKind.Colored.ALL.size(); i++) {
+                TileKind.Colored colorI = TileKind.Colored.ALL.get(i);
+                int nbOfColorITiles =  PkTileSet.countOf(pkTileSources.get(source.index()), colorI);
+                while (nbOfColorITiles > 0
+                        && colorI != color) {
+                   pkTileSourcesEditable[0] = PkTileSet.add(pkTileSourcesEditable[0], colorI);
+                   pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], colorI);
+                   --nbOfColorITiles;
+                }
+            }
         }
+        else if ( source instanceof TileSource.CenterArea && PkTileSet.countOf(pkTileSources.get(source.index()), TileKind.FIRST_PLAYER_MARKER) > 0) {
+            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
+                    PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates,currentPlayerId), PkTileSet.difference(PkTileSet.FULL,PkTileSet.FULL_COLORED)));
+            pkTileSourcesEditable[0] = PkTileSet.remove(pkTileSourcesEditable[0], TileKind.FIRST_PLAYER_MARKER);
+        }
+
+        if ( destination instanceof TileDestination.Pattern && destination.capacity() > countOfColor) {
+            for ( int i = 0 ; i < countOfColor ; ++i){
+                if ( !PkPatterns.isFull(pkPatterns,(TileDestination.Pattern) destination)){
+                    PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId,
+                            PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), (TileDestination.Pattern) destination, 1,  PkMove.color(pkMove)));
+                }
+                else if ( PkFloor.size(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId)) == 7) {
+                    PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
+                            PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId),PkTileSet.of(1, PkMove.color(pkMove))));
+                }
+                pkTileSourcesEditable[source.index()] = PkTileSet.remove( pkTileSourcesEditable[source.index()],color);
+            }
+        }
+
+        else if ( destination instanceof TileDestination.Pattern) {
+            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable,currentPlayerId,
+                    PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates,currentPlayerId), (TileDestination.Pattern) destination , countOfColor, color));
+            int temporaryCountOfColor = countOfColor;
+            while ( temporaryCountOfColor > 0) {
+                pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
+                --temporaryCountOfColor;
+            }
+
+        }
+        else if ( destination instanceof  TileDestination.Floor) {
+            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
+                    PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId),PkTileSet.of(countOfColor, PkMove.color(pkMove))));
+            int temporaryCountOfColor = countOfColor;
+            while ( temporaryCountOfColor > 0) {
+                pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
+                --temporaryCountOfColor;
+            }
+        }
+
+        currentPlayerId = game.playerIds().get(currentPlayerId.ordinal() % game.playersCount());
+
+        updateUniqueTilesSources();
+
+    }
+
+    private void updateUniqueTilesSources(){
+        int newPkUniqueTileSource = PkIntSet32.EMPTY;
+        int firstPlayerMarkerSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+
+        for (int i = 0; i < pkTileSourcesEditable.length; i++) {
+            int currentTiles = pkTileSourcesEditable[i];
+            int coloredTilesOnly = PkTileSet.difference(currentTiles, firstPlayerMarkerSet);
+
+            if (PkTileSet.isEmpty(coloredTilesOnly)) {
+                continue;
+            }
+
+            boolean isDuplicate = false;
+            for (int j = 1; j < i; j++) {
+                if (pkTileSourcesEditable[j] == currentTiles) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            if (!isDuplicate) {
+                newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
+            }
+        }
+
+        this.pkUniqueTileSources = newPkUniqueTileSource;
 
     }
 
