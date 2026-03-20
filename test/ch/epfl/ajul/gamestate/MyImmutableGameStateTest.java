@@ -320,4 +320,73 @@ public class MyImmutableGameStateTest {
 
         assertMovesEqualUnordered(expectedDest, expectedCount, actualDest, actualCount);
     }
+    private static final Game.PlayerDescription player1 = new Game.PlayerDescription(PlayerId.P1, "Player 1", Game.PlayerDescription.PlayerKind.HUMAN);
+    private static final Game.PlayerDescription player2 = new Game.PlayerDescription(PlayerId.P2, "Player 2", Game.PlayerDescription.PlayerKind.HUMAN);
+    private static final Game.PlayerDescription player3 = new Game.PlayerDescription(PlayerId.P3, "Player 3", Game.PlayerDescription.PlayerKind.AI);
+    private static final List<Game.PlayerDescription> playerDescriptions = List.of(player1, player2, player3);
+
+
+    private static final int TRIVIAL_CENTER_AREA = 0b00_000000_000000_000000_000010_000000;
+    private static final int TRIVIAL_FACTORY_1   = 0b00_000000_000000_000010_000000_000000;
+    private static final int TRIVIAL_FACTORY_2   = 0b00_000001_000010_000000_000000_000000;
+    private static final int TRIVIAL_FACTORY_3   = 0b00_000000_000000_000010_000000_000000;
+//total 9 tuiles
+
+    private static final int motif1 = 0b011_010_100_001_001_001;
+    private static final int floor1 = 0;
+    private static final int wall1  = 0;
+
+    private static final int motif2 = 0b010_001_001_010_011_001;
+    private static final int floor2 = 0b001_101_010;
+    private static final int wall2  = 0b10011_11000_00100_00000_11101;
+
+    private static final int motif3 = 0b100_011_010_001_001_010_011_001;
+    private static final int floor3 = 0b011_001_001_011_100;
+    private static final int wall3  = 0b11111_01000_01010_00010_01101;
+//total 42 tuiles
+
+    private static final int point1 = 0;
+    private static final int point2 = 10;
+    private static final int point3 = 25;
+
+    private static final int TILE_BAG = 0b00_000101_000101_000101_000101_000101; //25 tuiles
+
+    private static final int[] pkPlayerStates = new int[]{motif1, floor1, wall1, point1, motif2, floor2, wall2,
+            point2, motif3, floor3, wall3, point3};
+    private static final ImmutableIntArray playerStates = ImmutableIntArray.copyOf(pkPlayerStates);
+
+    Game myGame = new Game(playerDescriptions);
+
+    ImmutableGameState initialGame = ImmutableGameState.initial(myGame);
+    ImmutableGameState midGame = new ImmutableGameState(myGame, TILE_BAG,
+            ImmutableIntArray.copyOf(new int[]{TRIVIAL_CENTER_AREA,0,0,TRIVIAL_FACTORY_1,0,TRIVIAL_FACTORY_2,0,TRIVIAL_FACTORY_3}),
+            0b0101001, playerStates, PlayerId.P1);
+    ImmutableGameState endRoundGame = new ImmutableGameState(myGame, TILE_BAG,
+            ImmutableIntArray.copyOf(new int[]{0,0,0,0,0,0,0,0}), 0, playerStates, PlayerId.P1);
+
+    @Test
+    void playerIdsTest() {
+        List<PlayerId> playerIds = List.of(PlayerId.P1, PlayerId.P2, PlayerId.P3);
+        assertEquals(playerIds, initialGame.playerIds());
+        assertEquals(playerIds, endRoundGame.playerIds());
+    }
+
+    @Test
+    void isRoundOverTest() {
+        assertTrue(endRoundGame.isRoundOver());
+        assertFalse(midGame.isRoundOver());
+    }
+
+    @Test
+    void isGameOverTest() {
+        assertTrue(endRoundGame.isGameOver());
+        assertFalse(midGame.isGameOver());
+    }
+
+    @Test
+    void validMovesAndUniqueValidMovesTest() {
+        short[] maxMoves = new short[216];
+        assertEquals(17, midGame.validMoves(maxMoves));
+        assertEquals(14, midGame.uniqueValidMoves(maxMoves));
+    }
 }

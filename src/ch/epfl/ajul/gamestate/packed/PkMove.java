@@ -57,7 +57,7 @@ public final class PkMove {
         return TileKind.Colored.ALL.get(colorIndex);
     }
 
-    /// Retourne la destination du coup empqueté donné
+    /// Retourne la destination du coup empaqueté donné
     /// @return la destination correspondante
     public static TileDestination destination(short pkMove){
         int destinationIndex = ( pkMove & DESTINATION_MASK) >> DESTINATION_OFFSET;
