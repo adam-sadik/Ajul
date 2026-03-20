@@ -78,17 +78,15 @@ public interface ReadOnlyGameState {
     ///
     /// @return `true` si la partie est terminée, `false` sinon
     default boolean isGameOver() {
-        boolean isRowFull = false;
         if (!isRoundOver()) {
             return false;
         }
-        for (int i = 0; i < playerIds().size(); ++i) {
-            if (PkWall.hasFullRow(PkPlayerStates.pkWall(pkPlayerStates(), PlayerId.ALL.get(i)))) {
-                isRowFull = true;
-                break;
+        for (PlayerId p : playerIds()) {
+            if (PkWall.hasFullRow(PkPlayerStates.pkWall(pkPlayerStates(), p))) {
+                return true;
             }
         }
-        return isRoundOver() && isRowFull;
+        return false;
     }
 
     /// Calcule et retourne l'ensemble empaqueté des tuiles sorties du jeu.

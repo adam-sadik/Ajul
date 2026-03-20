@@ -9,7 +9,7 @@ public final class MutableIntArray extends AbstractIntArray {
     /// Privé pour forcer l'utilisation de la méthode fabrique wrapping.
     ///
     /// @param array le tableau primitif à emballer
-    private MutableIntArray ( int[] array ){
+    private MutableIntArray (int[] array){
         super(array);
     }
 
@@ -17,7 +17,7 @@ public final class MutableIntArray extends AbstractIntArray {
     ///
     /// @param array le tableau primitif à emballer directement
     /// @return une nouvelle instance de MutableIntArray emballant le tableau
-    public static MutableIntArray wrapping ( int [] array ){
+    public static MutableIntArray wrapping (int [] array){
         return new MutableIntArray(array);
     }
 

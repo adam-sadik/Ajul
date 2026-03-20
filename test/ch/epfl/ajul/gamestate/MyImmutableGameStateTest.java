@@ -1,270 +1,323 @@
 package ch.epfl.ajul.gamestate;
 
-import ch.epfl.ajul.Game;
-import ch.epfl.ajul.PlayerId;
-import ch.epfl.ajul.TileKind;
-import ch.epfl.ajul.gamestate.packed.PkIntSet32;
-import ch.epfl.ajul.gamestate.packed.PkPlayerStates;
-import ch.epfl.ajul.gamestate.packed.PkTileSet;
+import ch.epfl.ajul.*;
+import ch.epfl.ajul.gamestate.packed.*;
 import ch.epfl.ajul.intarray.ImmutableIntArray;
+import ch.epfl.ajul.intarray.MutableIntArray;
+import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.random.RandomGeneratorFactory;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MyImmutableGameStateTest {
+
+    // =========================================================================
+    // UTILITAIRES DE TESTS (Garantissent la robustesse)
+    // =========================================================================
+
+    private Game createGame(int players) {
+        var list = new ArrayList<Game.PlayerDescription>();
+        for (int i = 0; i < players; i++) {
+            list.add(new Game.PlayerDescription(PlayerId.ALL.get(i), "Player" + i, Game.PlayerDescription.PlayerKind.HUMAN));
+        }
+        return new Game(list);
+    }
+
     private Game game2Players() {
-        return new Game(List.of(
-                new Game.PlayerDescription(PlayerId.ALL.get(0), "Alice", Game.PlayerDescription.PlayerKind.HUMAN),
-                new Game.PlayerDescription(PlayerId.ALL.get(1), "Bob", Game.PlayerDescription.PlayerKind.AI)
-        ));
+        return createGame(2);
+    }
+
+    // Construit un mur avec la Ligne 1 pleine en utilisant les méthodes officielles (indépendant des bits)
+    private int createFullWallRow() {
+        int wall = PkWall.EMPTY;
+        for (TileKind.Colored c : TileKind.Colored.ALL) {
+            wall = PkWall.withTileAt(wall, TileDestination.Pattern.PATTERN_1, c);
+        }
+        return wall;
+    }
+
+    // Calcule exactement les 101 tuiles du jeu (20 de chaque + 1 marqueur)
+    private int getExactGameTilesSet() {
+        int gameSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+        for (TileKind.Colored c : TileKind.Colored.ALL) {
+            gameSet = PkTileSet.union(gameSet, PkTileSet.of(20, c));
+        }
+        return gameSet;
+    }
+
+    // Compare deux tableaux de coups sans se soucier de l'ordre d'insertion
+    private void assertMovesEqualUnordered(short[] expected, int expectedCount, short[] actual, int actualCount) {
+        assertEquals(expectedCount, actualCount, "Le nombre de coups générés ne correspond pas");
+        short[] expectedSlice = Arrays.copyOf(expected, expectedCount);
+        short[] actualSlice = Arrays.copyOf(actual, actualCount);
+        Arrays.sort(expectedSlice);
+        Arrays.sort(actualSlice);
+        assertArrayEquals(expectedSlice, actualSlice, "Les coups générés ne sont pas identiques (indépendamment de l'ordre)");
+    }
+
+    // L'USINE À MOCK
+    private static class MockGameState implements ReadOnlyGameState {
+        Game game;
+        int pkTileBag;
+        ReadOnlyIntArray pkTileSources;
+        int pkUniqueTileSources;
+        ReadOnlyIntArray pkPlayerStates;
+        PlayerId currentPlayerId;
+
+        @Override public Game game() { return game; }
+        @Override public int pkTileBag() { return pkTileBag; }
+        @Override public ReadOnlyIntArray pkTileSources() { return pkTileSources; }
+        @Override public int pkUniqueTileSources() { return pkUniqueTileSources; }
+        @Override public ReadOnlyIntArray pkPlayerStates() { return pkPlayerStates; }
+        @Override public PlayerId currentPlayerId() { return currentPlayerId; }
+    }
+
+    private MockGameState createEmptyState(int players) {
+        MockGameState state = new MockGameState();
+        state.game = createGame(players);
+        state.pkTileBag = PkTileSet.EMPTY;
+        state.pkUniqueTileSources = 0;
+        state.pkTileSources = MutableIntArray.wrapping(new int[state.game.tileSourcesCount()]);
+        state.pkPlayerStates = MutableIntArray.wrapping(new int[players * 4]);
+        state.currentPlayerId = PlayerId.ALL.get(0);
+        return state;
+    }
+
+    // =========================================================================
+    // TESTS DU CONSTRUCTEUR ET INITIALISATION
+    // =========================================================================
+
+    @Test
+    void constructorAcceptsValidArguments() {
+        Game game = game2Players();
+        ImmutableIntArray sources = ImmutableIntArray.copyOf(new int[game.tileSourcesCount()]);
+        ImmutableIntArray players = ImmutableIntArray.copyOf(new int[8]);
+        assertDoesNotThrow(() -> new ImmutableGameState(game, 0, sources, 0, players, PlayerId.ALL.get(0)));
     }
 
     @Test
     void constructorThrowsNullPointerExceptionOnNullArguments() {
         Game game = game2Players();
-        ImmutableIntArray validSources = ImmutableIntArray.copyOf(new int[6]);
+        ImmutableIntArray validSources = ImmutableIntArray.copyOf(new int[game.tileSourcesCount()]);
         ImmutableIntArray validPlayers = ImmutableIntArray.copyOf(new int[8]);
 
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(null, 0, validSources, 0, validPlayers, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, null, 0, validPlayers, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, validSources, 0, null, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, validSources, 0, validPlayers, null)
-        );
+        assertThrows(NullPointerException.class, () -> new ImmutableGameState(null, 0, validSources, 0, validPlayers, PlayerId.ALL.get(0)));
+        assertThrows(NullPointerException.class, () -> new ImmutableGameState(game, 0, null, 0, validPlayers, PlayerId.ALL.get(0)));
+        assertThrows(NullPointerException.class, () -> new ImmutableGameState(game, 0, validSources, 0, null, PlayerId.ALL.get(0)));
+        assertThrows(NullPointerException.class, () -> new ImmutableGameState(game, 0, validSources, 0, validPlayers, null));
     }
 
     @Test
     void immutableReturnsThisInstance() {
         ImmutableGameState state = ImmutableGameState.initial(game2Players());
-        assertSame(state, state.immutable(), "La méthode immutable() doit retourner 'this' pour éviter des copies inutiles");
-    }
-
-    @Test
-    void isRoundOverReturnsTrueOnlyWhenNoUniqueSourcesLeft() {
-        Game game = game2Players();
-        ImmutableIntArray emptySources = ImmutableIntArray.copyOf(new int[6]);
-        ImmutableIntArray emptyPlayers = ImmutableIntArray.copyOf(new int[8]);
-
-        // Cas 1 : Des sources uniques existent (la manche tourne)
-        // 0b101 signifie que les sources d'index 0 et 2 sont uniques/disponibles
-        ImmutableGameState statePlaying = new ImmutableGameState(
-                game, 0, emptySources, 0b101, emptyPlayers, PlayerId.ALL.get(0));
-        assertFalse(statePlaying.isRoundOver(), "La manche n'est pas finie si l'ensemble des sources uniques n'est pas vide");
-
-        // Cas 2 : L'ensemble des sources uniques est vide
-        ImmutableGameState stateOver = new ImmutableGameState(
-                game, 0, emptySources, PkIntSet32.EMPTY, emptyPlayers, PlayerId.ALL.get(0));
-        assertTrue(stateOver.isRoundOver(), "La manche est finie si PkIntSet32.EMPTY");
-    }
-
-    @Test
-    void isGameOverReturnsFalseIfRoundIsNotOver() {
-        Game game = game2Players();
-
-        int[] players = new int[8];
-        // On force un mur plein pour P1, MAIS la manche n'est pas finie
-        // 0b11111 représente une ligne pleine dans PkWall (à adapter selon ton bit-twiddling si différent)
-        PkPlayerStates.setPkWall(players, PlayerId.ALL.get(0), 0b11111);
-
-        ImmutableGameState state = new ImmutableGameState(
-                game, 0, ImmutableIntArray.copyOf(new int[6]), 0b1, // 0b1 = source unique dispo = manche en cours
-                ImmutableIntArray.copyOf(players), PlayerId.ALL.get(0));
-
-        assertFalse(state.isGameOver(), "La partie ne peut pas être finie si la manche est encore en cours, même avec un mur plein");
-    }
-
-    @Test
-    void isGameOverReturnsTrueIfRoundOverAndWallHasFullRow() {
-        Game game = game2Players();
-        int[] players = new int[8];
-
-        // On met une ligne pleine à P2 (pour s'assurer que ça boucle bien sur tous les joueurs)
-        // Ligne du haut pleine par exemple
-        int fullRowWall = 0b00000_00000_00000_00000_11111;
-        PkPlayerStates.setPkWall(players, PlayerId.ALL.get(1), fullRowWall);
-
-        ImmutableGameState state = new ImmutableGameState(
-                game, 0, ImmutableIntArray.copyOf(new int[6]), PkIntSet32.EMPTY, // Manche finie
-                ImmutableIntArray.copyOf(players), PlayerId.ALL.get(0));
-
-        assertTrue(state.isGameOver(), "La partie doit être finie (manche finie + ligne pleine trouvée)");
-    }
-
-    @Test
-    void pkDiscardedTilesIsZeroWhenAllTilesAreInBagOrOnBoard() {
-        ImmutableGameState initialState = ImmutableGameState.initial(game2Players());
-
-        // À l'état initial, FULL_COLORED est dans le sac et 1 marqueur est au centre.
-        // Rien n'a encore été défaussé.
-        int discarded = initialState.pkDiscardedTiles();
-        assertEquals(PkTileSet.EMPTY, discarded, "À l'état initial, la défausse doit être vide");
-    }
-
-
-    // Helper : Génère une partie valide à 4 joueurs (9 fabriques + 1 centre = 10 sources)
-    private Game game4Players() {
-        return new Game(List.of(
-                new Game.PlayerDescription(PlayerId.ALL.get(0), "Alice", Game.PlayerDescription.PlayerKind.HUMAN),
-                new Game.PlayerDescription(PlayerId.ALL.get(1), "Bob", Game.PlayerDescription.PlayerKind.AI),
-                new Game.PlayerDescription(PlayerId.ALL.get(2), "Charlie", Game.PlayerDescription.PlayerKind.AI),
-                new Game.PlayerDescription(PlayerId.ALL.get(3), "Diana", Game.PlayerDescription.PlayerKind.AI)
-        ));
-    }
-
-    @Test
-    void constructorThrowsNuullPointerExceptionOnNullArguments() {
-        Game game = game2Players();
-        ImmutableIntArray validSources = ImmutableIntArray.copyOf(new int[6]);
-        ImmutableIntArray validPlayers = ImmutableIntArray.copyOf(new int[8]);
-
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(null, 0, validSources, 0, validPlayers, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, null, 0, validPlayers, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, validSources, 0, null, PlayerId.ALL.get(0))
-        );
-        assertThrows(NullPointerException.class, () ->
-                new ImmutableGameState(game, 0, validSources, 0, validPlayers, null)
-        );
-    }
-
-    @Test
-    void immutableReturnnsThisInstance() {
-        ImmutableGameState state = ImmutableGameState.initial(game2Players());
-        assertSame(state, state.immutable(), "La méthode immutable() doit retourner l'instance courante");
+        assertSame(state, state.immutable(), "La méthode immutable() doit retourner 'this'");
     }
 
     @Test
     void initialStateIsCorrectlyConstructed() {
-        ImmutableGameState state = ImmutableGameState.initial(game2Players());
+        Game game = game2Players();
+        ImmutableGameState state = ImmutableGameState.initial(game);
 
-        // Vérification du sac : FULL_COLORED (20 de chaque, aucun marqueur)
         assertEquals(PkTileSet.FULL_COLORED, state.pkTileBag());
-
-        // Vérification du centre (index 0) : uniquement le marqueur
         int expectedCenter = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
         assertEquals(expectedCenter, state.pkTileSources().get(0));
 
-        // Vérification des fabriques : toutes vides
         for (int i = 1; i < state.pkTileSources().size(); i++) {
             assertEquals(0, state.pkTileSources().get(i), "La fabrique " + i + " doit être vide");
         }
+        assertEquals(PkIntSet32.EMPTY, state.pkUniqueTileSources());
+        assertEquals(PlayerId.ALL.get(0), state.currentPlayerId());
     }
 
-    @Test
-    void isRounndOverReturnsTrueOnlyWhenNoUniqueSourcesLeft() {
-        Game game = game2Players();
-        ImmutableIntArray emptySources = ImmutableIntArray.copyOf(new int[6]);
-        ImmutableIntArray emptyPlayers = ImmutableIntArray.copyOf(new int[8]);
-
-        // Cas 1 : La manche tourne (0b101 = sources 0 et 2 uniques et disponibles)
-        ImmutableGameState statePlaying = new ImmutableGameState(
-                game, 0, emptySources, 0b101, emptyPlayers, PlayerId.ALL.get(0));
-        assertFalse(statePlaying.isRoundOver());
-
-        // Cas 2 : La manche est finie (ensemble vide)
-        ImmutableGameState stateOver = new ImmutableGameState(
-                game, 0, emptySources, PkIntSet32.EMPTY, emptyPlayers, PlayerId.ALL.get(0));
-        assertTrue(stateOver.isRoundOver());
-    }
+    // =========================================================================
+    // TESTS : isRoundOver & isGameOver
+    // =========================================================================
 
     @Test
-    void isGameOverReturnsFalseIfRoundIsNotOverEvenWithFullWall() {
-        Game game = game2Players();
-        int[] players = new int[8];
-
-        // On simule une ligne de mur pleine (valeur arbitraire dépendant de ton implémentation de l'étape 4)
-        int fakeFullRow = 0b11111;
-        PkPlayerStates.setPkWall(players, PlayerId.ALL.get(0), fakeFullRow);
-
-        ImmutableGameState state = new ImmutableGameState(
-                game, 0, ImmutableIntArray.copyOf(new int[6]), 0b1, // 0b1 = manche en cours !
-                ImmutableIntArray.copyOf(players), PlayerId.ALL.get(0));
-
-        assertFalse(state.isGameOver(), "La partie ne peut pas se terminer au milieu d'une manche");
-    }
-
-    @Test
-    void pkDiscardedTilesIsCalculatedCorrectlyWhenTilesAreMissing() {
-        Game game = game2Players();
-
-        // 1. On crée un sac à moitié vide : 10 de chaque couleur (au lieu de 20)
-        int halfBag = 0;
-        for (TileKind.Colored color : TileKind.Colored.ALL) {
-            // CORRECTION ICI : On crée un set de 10 tuiles, et on l'unit au sac
-            int tenTilesOfColor = PkTileSet.of(10, color);
-            halfBag = PkTileSet.union(halfBag, tenTilesOfColor);
-        }
-
-        // 2. Sources vides, sauf le centre qui a le marqueur (pour respecter le nombre de tuiles du jeu)
-        int[] sources = new int[6];
+    void isRoundOverWorksWithMarkerInCenter() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
         sources[0] = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+        state.pkTileSources = MutableIntArray.wrapping(sources);
 
-        // 3. Les joueurs n'ont rien sur leurs plateaux
-        int[] players = new int[8];
-
-        ImmutableGameState state = new ImmutableGameState(
-                game, halfBag, ImmutableIntArray.copyOf(sources), PkIntSet32.EMPTY,
-                ImmutableIntArray.copyOf(players), PlayerId.ALL.get(0));
-
-        // 4. Calcul de la défausse
-        int discarded = state.pkDiscardedTiles();
-
-        // Sur les 20 tuiles de chaque couleur qui existent dans le jeu, seules 10 sont dans le sac.
-        // Les 10 autres DOIVENT être dans la défausse.
-        for (TileKind.Colored color : TileKind.Colored.ALL) {
-            assertEquals(10, PkTileSet.countOf(discarded, color),
-                    "Il manque 10 tuiles de type " + color + ", elles doivent être comptées dans la défausse");
-        }
-
-        // Le marqueur est au centre, il ne doit PAS être dans la défausse
-        assertEquals(0, PkTileSet.countOf(discarded, TileKind.FIRST_PLAYER_MARKER));
+        assertTrue(state.isRoundOver(), "Le marqueur seul ne prolonge pas la manche");
     }
 
     @Test
-    void pkDiscardedTilesWithTilesScatteredEverywhere() {
-        Game game = game2Players();
+    void isRoundOverWorksWhenColoredTilesRemain() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
+        sources[3] = PkTileSet.of(1, TileKind.Colored.C);
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+        state.pkUniqueTileSources = 0b001000; // La source 3 est unique
 
-        // Le sac ne contient que 5 tuiles A (A correspond à TileKind.Colored.A)
-        int bag = PkTileSet.of(5, TileKind.A);
+        assertFalse(state.isRoundOver());
+    }
 
-        // La fabrique 1 contient 2 tuiles B
-        int[] sources = new int[6];
-        sources[1] = PkTileSet.of(2, TileKind.B);
 
-        // Note : Le centre n'a pas le marqueur ici ! (On va tester s'il se retrouve bien dans la défausse)
+    @Test
+    void isGameOverReturnsTrueIfRoundOverAndWallHasFullRow() {
+        MockGameState state = createEmptyState(2);
 
-        int[] players = new int[8];
+        // Manche terminée (sources vides)
+        int[] sources = new int[state.game.tileSourcesCount()];
+        state.pkTileSources = MutableIntArray.wrapping(sources);
 
-        ImmutableGameState state = new ImmutableGameState(
-                game, bag, ImmutableIntArray.copyOf(sources), PkIntSet32.EMPTY,
-                ImmutableIntArray.copyOf(players), PlayerId.ALL.get(0));
+        // Mur plein pour le joueur 2
+        int[] playersData = new int[8];
+        PkPlayerStates.setPkWall(playersData, PlayerId.ALL.get(1), createFullWallRow());
+        state.pkPlayerStates = MutableIntArray.wrapping(playersData);
 
-        int discarded = state.pkDiscardedTiles();
+        assertTrue(state.isGameOver());
+    }
 
-        // Sorte A : 20 existantes - 5 dans le sac = 15 défaussées
-        assertEquals(15, PkTileSet.countOf(discarded, TileKind.A));
+    // =========================================================================
+    // TESTS : pkDiscardedTiles
+    // =========================================================================
 
-        // Sorte B : 20 existantes - 2 dans une fabrique = 18 défaussées
-        assertEquals(18, PkTileSet.countOf(discarded, TileKind.B));
+    @Test
+    void pkDiscardedTilesTrivialEmptyState() {
+        MockGameState state = createEmptyState(2);
+        assertEquals(getExactGameTilesSet(), state.pkDiscardedTiles(), "Si rien n'est en jeu, tout est défaussé");
+    }
 
-        // Sorte C, D, E : aucune n'est sur le plateau -> toutes les 20 sont défaussées
-        assertEquals(20, PkTileSet.countOf(discarded, TileKind.C));
-        assertEquals(20, PkTileSet.countOf(discarded, TileKind.D));
-        assertEquals(20, PkTileSet.countOf(discarded, TileKind.E));
+    @Test
+    void pkDiscardedTilesMathCrossCheck() {
+        MockGameState state = createEmptyState(2);
+        state.pkTileBag = PkTileSet.of(5, TileKind.Colored.A);
 
-        // Marqueur : n'est nulle part sur le plateau -> défaussé (1)
-        assertEquals(1, PkTileSet.countOf(discarded, TileKind.FIRST_PLAYER_MARKER));
+        int[] sources = new int[state.game.tileSourcesCount()];
+        sources[1] = PkTileSet.of(2, TileKind.Colored.B);
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+
+        int[] playersData = new int[8];
+        int patternP1 = PkPatterns.withAddedTiles(PkPatterns.EMPTY, TileDestination.Pattern.PATTERN_3, 3, TileKind.Colored.C);
+        PkPlayerStates.setPkPatterns(playersData, PlayerId.ALL.get(0), patternP1);
+
+        int floorP2 = PkFloor.withAddedTiles(PkFloor.EMPTY, PkTileSet.of(1, TileKind.Colored.D));
+        PkPlayerStates.setPkFloor(playersData, PlayerId.ALL.get(1), floorP2);
+
+        int wallP1 = PkWall.withTileAt(PkWall.EMPTY, TileDestination.Pattern.PATTERN_1, TileKind.Colored.E);
+        PkPlayerStates.setPkWall(playersData, PlayerId.ALL.get(0), wallP1);
+
+        state.pkPlayerStates = MutableIntArray.wrapping(playersData);
+
+        int expectedDiscarded = getExactGameTilesSet();
+        expectedDiscarded = PkTileSet.difference(expectedDiscarded, PkTileSet.of(5, TileKind.Colored.A));
+        expectedDiscarded = PkTileSet.difference(expectedDiscarded, PkTileSet.of(2, TileKind.Colored.B));
+        expectedDiscarded = PkTileSet.difference(expectedDiscarded, PkTileSet.of(3, TileKind.Colored.C));
+        expectedDiscarded = PkTileSet.difference(expectedDiscarded, PkTileSet.of(1, TileKind.Colored.D));
+        expectedDiscarded = PkTileSet.difference(expectedDiscarded, PkTileSet.of(1, TileKind.Colored.E));
+
+        assertEquals(expectedDiscarded, state.pkDiscardedTiles());
+    }
+
+    // =========================================================================
+    // TESTS : validMoves & uniqueValidMoves
+    // =========================================================================
+
+    @Test
+    void validMovesPopulatesArrayCorrectlyForSingleTile() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
+        sources[0] = PkTileSet.of(1, TileKind.Colored.A);
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+
+        short[] expectedDest = new short[Move.MAX_MOVES];
+        int expectedCount = 0;
+        TileSource center = TileSource.ALL.get(0);
+
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.A, TileDestination.FLOOR);
+        for (TileDestination.Pattern pattern : TileDestination.Pattern.ALL) {
+            expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.A, pattern);
+        }
+
+        short[] actualDest = new short[Move.MAX_MOVES];
+        int actualCount = state.validMoves(actualDest);
+
+        assertMovesEqualUnordered(expectedDest, expectedCount, actualDest, actualCount);
+    }
+
+    @Test
+    void validMovesFiltersOutWrongColorPatternLines() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
+        sources[1] = PkTileSet.of(1, TileKind.Colored.C);
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+
+        int[] playersData = new int[8];
+        int pattern = PkPatterns.withAddedTiles(PkPatterns.EMPTY, TileDestination.Pattern.PATTERN_2, 1, TileKind.Colored.D);
+        PkPlayerStates.setPkPatterns(playersData, PlayerId.ALL.get(0), pattern);
+        state.pkPlayerStates = MutableIntArray.wrapping(playersData);
+
+        short[] dest = new short[Move.MAX_MOVES];
+        int count = state.validMoves(dest);
+
+        // Plancher + 4 lignes (ligne 2 ignorée) = 5 coups
+        assertEquals(5, count);
+    }
+
+    @Test
+    void uniqueValidMovesArrayContentFiltersDuplicatesExactly() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
+
+        sources[1] = PkTileSet.of(1, TileKind.Colored.A);
+        sources[2] = PkTileSet.of(1, TileKind.Colored.A); // Doublon
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+        state.pkUniqueTileSources = 0b000010; // Seule la F1 (bit 1) est unique
+
+        short[] expectedDest = new short[Move.MAX_MOVES];
+        int expectedCount = 0;
+        expectedDest[expectedCount++] = (short) PkMove.pack(TileSource.ALL.get(1), TileKind.Colored.A, TileDestination.FLOOR);
+        for (TileDestination.Pattern p : TileDestination.Pattern.ALL) {
+            expectedDest[expectedCount++] = (short) PkMove.pack(TileSource.ALL.get(1), TileKind.Colored.A, p);
+        }
+
+        short[] actualDest = new short[Move.MAX_MOVES];
+        int actualCount = state.uniqueValidMoves(actualDest);
+
+        assertMovesEqualUnordered(expectedDest, expectedCount, actualDest, actualCount);
+    }
+
+    @Test
+    void validMovesExactContentWithColorRestrictions() {
+        MockGameState state = createEmptyState(2);
+        int[] sources = new int[state.game.tileSourcesCount()];
+        sources[0] = PkTileSet.union(PkTileSet.of(1, TileKind.Colored.A), PkTileSet.of(1, TileKind.Colored.B));
+        state.pkTileSources = MutableIntArray.wrapping(sources);
+
+        int[] playersData = new int[8];
+        int pattern = PkPatterns.EMPTY;
+        pattern = PkPatterns.withAddedTiles(pattern, TileDestination.Pattern.PATTERN_1, 1, TileKind.Colored.A);
+        pattern = PkPatterns.withAddedTiles(pattern, TileDestination.Pattern.PATTERN_2, 1, TileKind.Colored.B);
+        pattern = PkPatterns.withAddedTiles(pattern, TileDestination.Pattern.PATTERN_3, 1, TileKind.Colored.C);
+        PkPlayerStates.setPkPatterns(playersData, PlayerId.ALL.get(0), pattern);
+        state.pkPlayerStates = MutableIntArray.wrapping(playersData);
+
+        short[] expectedDest = new short[Move.MAX_MOVES];
+        int expectedCount = 0;
+        TileSource center = TileSource.ALL.get(0);
+
+        // Couleur A (accepte Floor, P4, P5)
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.A, TileDestination.FLOOR);
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.A, TileDestination.Pattern.PATTERN_4);
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.A, TileDestination.Pattern.PATTERN_5);
+
+        // Couleur B (accepte Floor, P2, P4, P5)
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.B, TileDestination.FLOOR);
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.B, TileDestination.Pattern.PATTERN_2);
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.B, TileDestination.Pattern.PATTERN_4);
+        expectedDest[expectedCount++] = (short) PkMove.pack(center, TileKind.Colored.B, TileDestination.Pattern.PATTERN_5);
+
+        short[] actualDest = new short[Move.MAX_MOVES];
+        int actualCount = state.validMoves(actualDest);
+
+        assertMovesEqualUnordered(expectedDest, expectedCount, actualDest, actualCount);
     }
 }

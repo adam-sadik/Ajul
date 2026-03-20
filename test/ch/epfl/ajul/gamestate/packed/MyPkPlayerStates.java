@@ -498,5 +498,345 @@ public class MyPkPlayerStates {
         assertEquals(0, PkPlayerStates.pkWall(read, PlayerId.ALL.get(3)));
         assertEquals(0, PkPlayerStates.points(read, PlayerId.ALL.get(3)));
     }
+    // --- Utilitaires de test ---
+
+    private Game createMockGame(int playerCount) {
+        // Crée une partie avec le nombre de joueurs demandé
+        var players = new java.util.ArrayList<Game.PlayerDescription>();
+        for (int i = 0; i < playerCount; i++) {
+            players.add(new Game.PlayerDescription(PlayerId.ALL.get(i), "P" + i, Game.PlayerDescription.PlayerKind.HUMAN));
+        }
+        return new Game(players);
+    }
+
+    private PlayerId[] getActivePlayers(int count) {
+        PlayerId[] ids = new PlayerId[count];
+        for(int i=0; i<count; i++) ids[i] = PlayerId.ALL.get(i);
+        return ids;
+    }
+
+    // =========================================================================
+    // TESTS DE : initial(Game)
+    // =========================================================================
+
+    @Test
+    void initialArraySizeIsCorrectForTwoPlayers() {
+        Game game = createMockGame(2);
+        var state = PkPlayerStates.initial(game);
+        assertEquals(8, state.size(), "Un jeu à 2 joueurs nécessite 8 entiers");
+    }
+
+    @Test
+    void initialArraySizeIsCorrectForFourPlayers() {
+        Game game = createMockGame(4);
+        var state = PkPlayerStates.initial(game);
+        assertEquals(16, state.size(), "Un jeu à 4 joueurs nécessite 16 entiers");
+    }
+
+    @Test
+    void initialArrayIsStrictlyFilledWithZeros() {
+        Game game = createMockGame(3); // 3 joueurs = 12 entiers
+        var state = PkPlayerStates.initial(game);
+
+        for (int i = 0; i < state.size(); i++) {
+            assertEquals(0, state.get(i), "L'index " + i + " doit être 0 à l'initialisation");
+        }
+    }
+
+    @Test
+    void initialWorksOnExtremeBounds() {
+        // En théorie, Azul se joue de 2 à 4 joueurs. Testons la limite basse.
+        Game game = createMockGame(2);
+        assertDoesNotThrow(() -> PkPlayerStates.initial(game));
+    }
+
+    @Test
+    void initialProvidesReadAccessThroughGettersWithoutCrashing() {
+        Game game = createMockGame(2);
+        var state = PkPlayerStates.initial(game);
+
+        // S'assure que les getters peuvent lire l'état initial (0) sans lever d'erreur
+        assertEquals(0, PkPlayerStates.pkPatterns(state, PlayerId.P1));
+        assertEquals(0, PkPlayerStates.pkFloor(state, PlayerId.P2));
+        assertEquals(0, PkPlayerStates.points(state, PlayerId.P2));
+    }
+
+    // =========================================================================
+    // TESTS DE : pkPatterns & setPkPatterns
+    // =========================================================================
+
+    @Test
+    void pkPatternsSetAndGetTrivial() {
+        int[] state = new int[16]; // Partie à 4 joueurs
+        int patternVal = 0b101010;
+
+        PkPlayerStates.setPkPatterns(state, PlayerId.P3, patternVal);
+        var readOnlyState = ImmutableIntArray.copyOf(state);
+
+        assertEquals(patternVal, PkPlayerStates.pkPatterns(readOnlyState, PlayerId.P3));
+    }
+
+    @Test
+    void pkPatternsWritesStrictlyToCorrectOffset() {
+        int[] state = new int[16];
+        int patternVal = 42;
+
+        // L'index de P2 (ordinal 1) pour les patterns (offset 0) doit être 4.
+        PkPlayerStates.setPkPatterns(state, PlayerId.P2, patternVal);
+        assertEquals(patternVal, state[4]);
+
+        // Tous les autres index doivent être intacts (0)
+        for(int i=0; i<16; i++) {
+            if(i != 4) assertEquals(0, state[i]);
+        }
+    }
+
+    @Test
+    void pkPatternsDoesNotAffectOtherPlayersOrFields() {
+        int[] state = new int[8];
+        PkPlayerStates.setPkPatterns(state, PlayerId.P1, 999);
+        PkPlayerStates.setPkFloor(state, PlayerId.P2, 888);
+
+        var roState = ImmutableIntArray.copyOf(state);
+
+        // Modifier les patterns de P1 ne touche ni son floor, ni les patterns de P2
+        assertEquals(0, PkPlayerStates.pkFloor(roState, PlayerId.P1));
+        assertEquals(0, PkPlayerStates.pkPatterns(roState, PlayerId.P2));
+        assertEquals(999, PkPlayerStates.pkPatterns(roState, PlayerId.P1));
+    }
+
+    @Test
+    void pkPatternsReadsCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            for (int j = 0; j < 16; j++) rawState[j] = rng.nextInt();
+
+            var roState = ImmutableIntArray.copyOf(rawState);
+
+            for (PlayerId id : getActivePlayers(4)) {
+                int expectedIndex = id.ordinal() * 4 + 0; // offset 0
+                assertEquals(rawState[expectedIndex], PkPlayerStates.pkPatterns(roState, id));
+            }
+        }
+    }
+
+    @Test
+    void pkPatternsWritesCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            PlayerId randomPlayer = PlayerId.ALL.get(rng.nextInt(4));
+            int randomVal = rng.nextInt();
+
+            PkPlayerStates.setPkPatterns(rawState, randomPlayer, randomVal);
+
+            int expectedIndex = randomPlayer.ordinal() * 4 + 0;
+            assertEquals(randomVal, rawState[expectedIndex]);
+        }
+    }
+
+    // =========================================================================
+    // TESTS DE : pkFloor & setPkFloor
+    // =========================================================================
+
+    @Test
+    void pkFloorSetAndGetTrivial() {
+        int[] state = new int[16];
+        int floorVal = 0b111;
+        PkPlayerStates.setPkFloor(state, PlayerId.P4, floorVal);
+        assertEquals(floorVal, PkPlayerStates.pkFloor(ImmutableIntArray.copyOf(state), PlayerId.P4));
+    }
+
+    @Test
+    void pkFloorWritesStrictlyToCorrectOffset() {
+        int[] state = new int[16];
+        PkPlayerStates.setPkFloor(state, PlayerId.P3, 77);
+        // P3 (ordinal 2) * 4 + offset 1 = 9
+        assertEquals(77, state[9]);
+    }
+
+    @Test
+    void pkFloorDoesNotAffectOtherFields() {
+        int[] state = new int[8];
+        PkPlayerStates.setPkFloor(state, PlayerId.P1, 123);
+        var roState = ImmutableIntArray.copyOf(state);
+
+        assertEquals(0, PkPlayerStates.pkPatterns(roState, PlayerId.P1));
+        assertEquals(0, PkPlayerStates.pkWall(roState, PlayerId.P1));
+        assertEquals(123, PkPlayerStates.pkFloor(roState, PlayerId.P1));
+    }
+
+    @Test
+    void pkFloorReadsCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            for (int j = 0; j < 16; j++) rawState[j] = rng.nextInt();
+            var roState = ImmutableIntArray.copyOf(rawState);
+
+            for (PlayerId id : getActivePlayers(4)) {
+                int expectedIndex = id.ordinal() * 4 + 1; // offset 1
+                assertEquals(rawState[expectedIndex], PkPlayerStates.pkFloor(roState, id));
+            }
+        }
+    }
+
+    @Test
+    void pkFloorWritesCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            PlayerId target = PlayerId.ALL.get(rng.nextInt(4));
+            int val = rng.nextInt();
+
+            PkPlayerStates.setPkFloor(rawState, target, val);
+            int expectedIndex = target.ordinal() * 4 + 1;
+            assertEquals(val, rawState[expectedIndex]);
+        }
+    }
+
+    // =========================================================================
+    // TESTS DE : pkWall & setPkWall
+    // =========================================================================
+
+    @Test
+    void pkWallSetAndGetTrivial() {
+        int[] state = new int[8];
+        int wallVal = (1 << 25) - 1; // Mur plein
+        PkPlayerStates.setPkWall(state, PlayerId.P2, wallVal);
+        assertEquals(wallVal, PkPlayerStates.pkWall(ImmutableIntArray.copyOf(state), PlayerId.P2));
+    }
+
+    @Test
+    void pkWallWritesStrictlyToCorrectOffset() {
+        int[] state = new int[12]; // 3 joueurs
+        PkPlayerStates.setPkWall(state, PlayerId.P1, 55);
+        // P1 (ordinal 0) * 4 + offset 2 = 2
+        assertEquals(55, state[2]);
+    }
+
+    @Test
+    void pkWallDoesNotAffectOtherFields() {
+        int[] state = new int[8];
+        PkPlayerStates.setPkWall(state, PlayerId.P2, 999);
+        var roState = ImmutableIntArray.copyOf(state);
+
+        assertEquals(0, PkPlayerStates.pkFloor(roState, PlayerId.P2));
+        assertEquals(0, PkPlayerStates.points(roState, PlayerId.P2));
+        assertEquals(999, PkPlayerStates.pkWall(roState, PlayerId.P2));
+    }
+
+    @Test
+    void pkWallReadsCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            for (int j = 0; j < 16; j++) rawState[j] = rng.nextInt();
+            var roState = ImmutableIntArray.copyOf(rawState);
+
+            for (PlayerId id : getActivePlayers(4)) {
+                int expectedIndex = id.ordinal() * 4 + 2; // offset 2
+                assertEquals(rawState[expectedIndex], PkPlayerStates.pkWall(roState, id));
+            }
+        }
+    }
+
+    @Test
+    void pkWallWritesCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            PlayerId target = PlayerId.ALL.get(rng.nextInt(4));
+            int val = rng.nextInt();
+
+            PkPlayerStates.setPkWall(rawState, target, val);
+            int expectedIndex = target.ordinal() * 4 + 2;
+            assertEquals(val, rawState[expectedIndex]);
+        }
+    }
+
+    // =========================================================================
+    // TESTS DE : points & addPoints
+    // =========================================================================
+
+    @Test
+    void addPointsTrivialPositiveAndNegative() {
+        int[] state = new int[8];
+
+        PkPlayerStates.addPoints(state, PlayerId.P1, 10);
+        var roState1 = ImmutableIntArray.copyOf(state);
+        assertEquals(10, PkPlayerStates.points(roState1, PlayerId.P1));
+
+        // Ajout d'un score négatif (pénalité du plancher par exemple)
+        PkPlayerStates.addPoints(state, PlayerId.P1, -3);
+        var roState2 = ImmutableIntArray.copyOf(state);
+        assertEquals(7, PkPlayerStates.points(roState2, PlayerId.P1));
+    }
+
+    @Test
+    void addPointsAccumulattesCorrectly() {
+        int[] state = new int[8];
+
+        // Ajouts séquentiels
+        PkPlayerStates.addPoints(state, PlayerId.P2, 5);
+        PkPlayerStates.addPoints(state, PlayerId.P2, 12);
+        PkPlayerStates.addPoints(state, PlayerId.P2, -2);
+
+        var roState = ImmutableIntArray.copyOf(state);
+        assertEquals(15, PkPlayerStates.points(roState, PlayerId.P2));
+    }
+
+    @Test
+    void addPointsDoesNotAffectOtherFields() {
+        int[] state = new int[8];
+        PkPlayerStates.addPoints(state, PlayerId.P1, 45);
+        // P1 (ordinal 0) * 4 + offset 3 = 3
+        assertEquals(45, state[3]);
+
+        // Les offsets 0, 1, 2 doivent rester à 0
+        assertEquals(0, state[0]);
+        assertEquals(0, state[1]);
+        assertEquals(0, state[2]);
+    }
+
+    @Test
+    void pointsReadsCorrectOffsetProfStyle() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            for (int j = 0; j < 16; j++) rawState[j] = rng.nextInt();
+            var roState = ImmutableIntArray.copyOf(rawState);
+
+            for (PlayerId id : getActivePlayers(4)) {
+                int expectedIndex = id.ordinal() * 4 + 3; // offset 3
+                assertEquals(rawState[expectedIndex], PkPlayerStates.points(roState, id));
+            }
+        }
+    }
+
+    @Test
+    void addPointsProfStyleRandomized() {
+        var rng = RandomGeneratorFactory.getDefault().create(2026);
+        for (int i = 0; i < 1000; i++) {
+            int[] rawState = new int[16];
+            int[] expectedPoints = new int[4];
+
+            // On fait 20 ajouts aléatoires de points
+            for(int k = 0; k < 20; k++) {
+                PlayerId target = PlayerId.ALL.get(rng.nextInt(4));
+                int addVal = rng.nextInt(-20, 50); // Simulation points et pénalités
+
+                PkPlayerStates.addPoints(rawState, target, addVal);
+                expectedPoints[target.ordinal()] += addVal;
+            }
+
+            // On vérifie que le total cumulé est correct pour chaque joueur
+            var roState = ImmutableIntArray.copyOf(rawState);
+            for (PlayerId id : getActivePlayers(4)) {
+                assertEquals(expectedPoints[id.ordinal()], PkPlayerStates.points(roState, id));
+            }
+        }
+    }
 }
 
