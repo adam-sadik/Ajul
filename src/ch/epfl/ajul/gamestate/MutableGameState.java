@@ -184,38 +184,114 @@ public final class MutableGameState implements ReadOnlyGameState  {
 
         currentPlayerId = game.playerIds().get(currentPlayerId.ordinal() % game.playersCount());
 
-        updateUniqueTilesSources();
+//        updateUniqueTilesSources();
 
     }
 
-    private void updateUniqueTilesSources(){
-        int newPkUniqueTileSource = PkIntSet32.EMPTY;
-        int firstPlayerMarkerSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
-
-        for (int i = 0; i < pkTileSourcesEditable.length; i++) {
-            int currentTiles = pkTileSourcesEditable[i];
-            int coloredTilesOnly = PkTileSet.difference(currentTiles, firstPlayerMarkerSet);
-
-            if (PkTileSet.isEmpty(coloredTilesOnly)) {
-                continue;
-            }
-
-            boolean isDuplicate = false;
-            for (int j = 1; j < i; j++) {
-                if (pkTileSourcesEditable[j] == currentTiles) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-
-            if (!isDuplicate) {
-                newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
-            }
-        }
-
-        this.pkUniqueTileSources = newPkUniqueTileSource;
+//    private void updateUniqueTilesSources(){
+//        int newPkUniqueTileSource = PkIntSet32.EMPTY;
+//        int firstPlayerMarkerSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+//
+//        for (int i = 0; i < pkTileSourcesEditable.length; i++) {
+//            int currentTiles = pkTileSourcesEditable[i];
+//            int coloredTilesOnly = PkTileSet.difference(currentTiles, firstPlayerMarkerSet);
+//
+//            if (PkTileSet.isEmpty(coloredTilesOnly)) {
+//                continue;
+//            }
+//
+//            boolean isDuplicate = false;
+//            for (int j = 1; j < i; j++) {
+//                if (pkTileSourcesEditable[j] == currentTiles) {
+//                    isDuplicate = true;
+//                    break;
+//                }
+//            }
+//
+//            if (!isDuplicate) {
+//                newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
+//            }
+//        }
+//
+//        this.pkUniqueTileSources = newPkUniqueTileSource;
+//        if (PkMove.source(pkMove) instanceof TileSource.Factory){
+//            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkMove.destination(pkMove).index());
+//        }
 
     }
+//
+//    public void endRound() {
+//        for (PlayerId playerId : playerIds()) {
+//            int points = 0;
+//            int pkPatterns = PkPlayerStates.pkPatterns(pkPlayerStates(), playerId);
+//
+//            for (TileDestination.Pattern pattern : TileDestination.Pattern.ALL) {
+//                if (PkPatterns.isFull(pkPatterns, pattern)){
+//
+//                    TileKind.Colored coloredTile = PkPatterns.color(pkPatterns, pattern);
+//                    int pkWall = PkPlayerStates.pkWall(pkPlayerStates, playerId);
+//                    int newWall = PkWall.withTileAt(pkWall, pattern, coloredTile);
+//                    PkPlayerStates.setPkWall(pkPlayerStatesEditable, playerId, newWall);
+//
+//                    int tilePoints = Points.newWallTilePoints(
+//                            PkWall.hGroupSize(newWall, pattern, coloredTile),
+//                            PkWall.vGroupSize(newWall, pattern, coloredTile));
+//                    points += tilePoints;
+//
+//                    pointsObserver.newWallTile(playerId, pattern, coloredTile, tilePoints);
+//
+//                    pkPatterns = PkPatterns.withEmptyLine(pkPatterns, pattern);
+//                }
+//            }
+//            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, playerId, pkPatterns);
+//
+//            int pkFloor = PkPlayerStates.pkFloor(pkPlayerStates(), playerId);
+//            int floorPenalty = Points.totalFloorPenalty(PkFloor.size(pkFloor));
+//            points -= floorPenalty;
+//            pointsObserver.floor(playerId, floorPenalty);
+//            int currentScore = PkPlayerStates.points(pkPlayerStates, playerId);
+//            if (currentScore + points < 0) {
+//                points = -currentScore;
+//            }
+//            PkPlayerStates.addPoints(pkPlayerStatesEditable, playerId, points);
+//            if (PkFloor.containsFirstPlayerMarker(pkFloor)) {
+//                pkTileSourcesEditable[TileSource.CENTER_AREA.index()] =
+//                        PkTileSet.add(pkTileSourcesEditable[TileSource.CENTER_AREA.index()], TileKind.FIRST_PLAYER_MARKER);
+//                currentPlayerId = playerId;
+//            }
+//            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, playerId,PkFloor.EMPTY);
+//        }
+//    }
+//
+//    public void endGame() {
+//        for (PlayerId playerId : playerIds()) {
+//            int bonusPoints = 0;
+//            int pkWall = PkPlayerStates.pkWall(pkPlayerStates, playerId);
+//
+//            for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
+//                if (PkWall.isRowFull(pkWall, line)) {
+//                    bonusPoints += Points.FULL_ROW_BONUS_POINTS;
+//                    pointsObserver.fullRow(playerId, line, Points.FULL_ROW_BONUS_POINTS);
+//                }
+//            }
+//
+//            for (int j = 0; j < PkWall.WALL_WIDTH; ++j) {
+//                if (PkWall.isColumnFull(pkWall, j)) {
+//                    bonusPoints += Points.FULL_COLUMN_BONUS_POINTS;
+//                    pointsObserver.fullColumn(playerId, j, Points.FULL_COLUMN_BONUS_POINTS);
+//                }
+//            }
+//
+//            for (TileKind.Colored color : TileKind.Colored.ALL) {
+//                if (PkWall.isColorFull(pkWall, color)) {
+//                    bonusPoints += Points.FULL_COLOR_BONUS_POINTS;
+//                    pointsObserver.fullColor(playerId, color, Points.FULL_COLOR_BONUS_POINTS);
+//                }
+//            }
+//
+//            PkPlayerStates.addPoints(pkPlayerStatesEditable, playerId, bonusPoints);
+//        }
+//    }
+//
 
 
-}
