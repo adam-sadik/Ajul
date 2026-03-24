@@ -7,6 +7,11 @@ import ch.epfl.ajul.intarray.ReadOnlyIntArray;
 
 import java.util.random.RandomGenerator;
 
+/// Représente l'état modifiable d'une partie d'Ajul.
+/// Cette classe permet de faire évoluer l'état du jeu (remplissage des fabriques,
+/// application des coups, calcul des scores de fin de manche et de fin de partie).
+/// @author Rayane Taoufik Benchekroun (412052)
+/// @author Adam Ghali SADIK (412029)
 public final class MutableGameState implements ReadOnlyGameState {
 
     private final Game game;
@@ -19,6 +24,10 @@ public final class MutableGameState implements ReadOnlyGameState {
     private PlayerId currentPlayerId;
     private final PointsObserver pointsObserver;
 
+    /// Construit un état de partie modifiable à partir d'un état initial et d'un observateur de points.
+    ///
+    /// @param initialState   l'état initial de la partie (en lecture seule)
+    /// @param pointsObserver l'observateur notifié lors des changements de points des joueurs
     public MutableGameState(ReadOnlyGameState initialState, PointsObserver pointsObserver) {
         this.pointsObserver = pointsObserver;
         game = initialState.game();
@@ -31,41 +40,68 @@ public final class MutableGameState implements ReadOnlyGameState {
         currentPlayerId = initialState.currentPlayerId();
     }
 
+    /// Construit un état de partie modifiable à partir d'un état initial,
+    /// avec un observateur de points vide par défaut.
+    ///
+    /// @param initialState l'état initial de la partie (en lecture seule)
     public MutableGameState(ReadOnlyGameState initialState) {
         this(initialState, PointsObserver.EMPTY);
     }
 
-
+    /// Retourne les paramètres de la configuration de la partie.
+    ///
+    /// @return la configuration de la partie (instance de `Game`)
     @Override
     public Game game() {
         return game;
     }
 
+    /// Retourne le contenu actuel du sac de tuiles sous forme empaquetée.
+    ///
+    /// @return le sac de tuiles empaqueté
     @Override
     public int pkTileBag() {
         return pkTileBag;
     }
 
+    /// Retourne les sources de tuiles (zone centrale et fabriques) sous forme de tableau en lecture seule.
+    ///
+    /// @return le tableau des sources de tuiles empaquetées
     @Override
     public ReadOnlyIntArray pkTileSources() {
         return pkTileSources;
     }
 
+    /// Retourne l'ensemble des index des sources de tuiles uniques sous forme empaquetée.
+    ///
+    /// @return les sources de tuiles uniques empaquetées
     @Override
     public int pkUniqueTileSources() {
         return pkUniqueTileSources;
     }
 
+    /// Retourne l'état de tous les joueurs de la partie sous forme de tableau en lecture seule.
+    ///
+    /// @return le tableau des états empaquetés des joueurs
     @Override
     public ReadOnlyIntArray pkPlayerStates() {
         return pkPlayerStates;
     }
 
+    /// Retourne l'identité du joueur dont c'est le tour de jouer.
+    ///
+    /// @return l'identité du joueur courant
     @Override
     public PlayerId currentPlayerId() {
         return currentPlayerId;
     }
 
+
+    /// Remplit les fabriques avec des tuiles tirées aléatoirement du sac.
+    /// Si le sac est vide, il est préalablement rempli avec les tuiles sorties du jeu.
+    /// Met également à jour l'ensemble des sources de tuiles uniques.
+    ///
+    /// @param randomGenerator le générateur de nombres aléatoires utilisé pour tirer les tuiles
     public void fillFactories(RandomGenerator randomGenerator) {
         // assert isRoundOver();
         int totalNbOfTiles = 0;
@@ -132,6 +168,12 @@ public final class MutableGameState implements ReadOnlyGameState {
         updateUniqueTilesSources();
     }
 
+    /// Enregistre et applique un coup joué par le joueur courant.
+    /// Cette méthode déplace les tuiles de la source choisie vers la destination,
+    /// gère les tuiles restantes (vers la zone centrale ou le plancher),
+    /// met à jour le joueur courant, et actualise les sources uniques.
+    ///
+    /// @param pkMove le coup joué sous forme empaquetée
     public void registerMove(short pkMove) {
         TileSource source = PkMove.source(pkMove);
         TileKind.Colored color = PkMove.color(pkMove);
@@ -139,9 +181,7 @@ public final class MutableGameState implements ReadOnlyGameState {
         int countOfColor = PkTileSet.countOf(pkTileSources.get(source.index()), color);
         int pkPatterns = PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId);
 
-// Ne Rajoute pas les tuiles dans la destination
         if (source instanceof TileSource.Factory) {
-            //PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkTileSet.add(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), PkMove.color(pkMove)));
             for (int i = 0; i < TileKind.Colored.ALL.size(); i++) {
                 TileKind.Colored colorI = TileKind.Colored.ALL.get(i);
                 int nbOfColorITiles = PkTileSet.countOf(pkTileSources.get(source.index()), colorI);
@@ -188,44 +228,60 @@ public final class MutableGameState implements ReadOnlyGameState {
             }
         }
 
-        currentPlayerId = game.playerIds().get(currentPlayerId.ordinal() % game.playersCount());
+        currentPlayerId = game.playerIds().get((currentPlayerId.ordinal() + 1) % game.playersCount());
 
         updateUniqueTilesSources();
 
     }
 
+    /// Met à jour l'ensemble empaqueté représentant les sources de tuiles uniques.
+    /// Une source est considérée unique si elle contient des tuiles colorées et que
+    /// son contenu diffère de toutes les fabriques la précédant.
     private void updateUniqueTilesSources() {
         int newPkUniqueTileSource = PkIntSet32.EMPTY;
-        int firstPlayerMarkerSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
 
-        for (int i = 0; i < pkTileSourcesEditable.length; i++) {
-            int currentTiles = pkTileSourcesEditable[i];
-            int coloredTilesOnly = PkTileSet.difference(currentTiles, firstPlayerMarkerSet);
+        int centralArea = pkTileSources.get(TileSource.CENTER_AREA.index());
+        boolean centerAreaContainsFirstPlayerMarker = PkTileSet.countOf(centralArea, TileKind.FIRST_PLAYER_MARKER ) == TileKind.FIRST_PLAYER_MARKER.tilesCount();
+        if ( centerAreaContainsFirstPlayerMarker){
+            centralArea = PkTileSet.remove(centralArea, TileKind.FIRST_PLAYER_MARKER);
+        }
+        if ( !PkTileSet.isEmpty(centralArea)){
+            newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource,TileSource.CENTER_AREA.index() );
+        }
 
-            if (PkTileSet.isEmpty(coloredTilesOnly)) {
-                continue;
+        for (int i = 1; i <= game.factoriesCount() ; i++) {
+            int factoryNbI = pkTileSources.get(i);
+            int factoryNbIWithoutFirstPlayerMaker = factoryNbI;
+            boolean containsAColorTile = false;
+            if ( PkTileSet.countOf(factoryNbI, TileKind.FIRST_PLAYER_MARKER) == TileKind.FIRST_PLAYER_MARKER.tilesCount()) {
+                factoryNbIWithoutFirstPlayerMaker = PkTileSet.remove(factoryNbI, TileKind.FIRST_PLAYER_MARKER);
             }
-
-            boolean isDuplicate = false;
-            for (int j = 1; j < i; j++) {
-                if (pkTileSourcesEditable[j] == currentTiles) {
-                    isDuplicate = true;
-                    break;
+            if ( !PkTileSet.isEmpty(factoryNbIWithoutFirstPlayerMaker) ){
+                containsAColorTile = true;
+            }
+            if ( containsAColorTile) {
+                    boolean duplicate = false;
+                for (int j = 1; j < i; j++) {
+                    if ( factoryNbI == pkTileSources.get(j)){
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if ( !duplicate){
+                    newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
                 }
             }
 
-            if (!isDuplicate) {
-                newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
-            }
         }
-
-        this.pkUniqueTileSources = newPkUniqueTileSource;
-        if (PkMove.source(pkMove) instanceof TileSource.Factory) {
-            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkMove.destination(pkMove).index());
-        }
-
+        pkUniqueTileSources = newPkUniqueTileSource;
     }
 
+
+    /// Termine la manche en cours.
+    /// Cette méthode parcourt les lignes de motif de tous les joueurs. Si une ligne est pleine,
+    /// une tuile est déplacée sur le mur et les points correspondants sont ajoutés.
+    /// Les pénalités de la ligne plancher sont ensuite déduites (sans descendre sous 0 point).
+    /// Les observateurs de points sont notifiés de chaque événement.
     public void endRound() {
         for (PlayerId playerId : playerIds()) {
             int points = 0;
@@ -268,6 +324,11 @@ public final class MutableGameState implements ReadOnlyGameState {
             PkPlayerStates.setPkFloor(pkPlayerStatesEditable, playerId, PkFloor.EMPTY);
         }
     }
+
+    /// Termine la partie de jeu.
+    /// Cette méthode inspecte le mur de chaque joueur pour identifier les lignes, colonnes
+    /// et couleurs complètes, puis leur attribue les points de bonus finaux correspondants.
+    /// Les observateurs de points sont notifiés de chaque bonus.
 
     public void endGame() {
         for (PlayerId playerId : playerIds()) {
