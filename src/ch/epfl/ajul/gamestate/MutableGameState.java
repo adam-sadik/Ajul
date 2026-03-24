@@ -67,69 +67,62 @@ public final class MutableGameState implements ReadOnlyGameState {
     }
 
     public void fillFactories(RandomGenerator randomGenerator) {
-        // assert isRoundOver();
-        int totalNbOfTiles = 0;
-        for (int i = 1; i < pkTileSources.size(); i++) {
-            totalNbOfTiles += PkTileSet.size(pkTileSources.get(i));
-        }
-        int necessaryNbTiles = (pkTileSources.size() - 1) * TileSource.Factory.TILES_PER_FACTORY - totalNbOfTiles;
-
-        TileKind.Colored[] factories = new TileKind.Colored[necessaryNbTiles];
-
-        int tilesActuallyDrawn = 0;
+        //assert isRoundOver();
+        int necessaryNbTiles = (pkTileSources.size() - 1) * TileSource.Factory.TILES_PER_FACTORY;
+        int drawnTilesMultiset = PkTileSet.EMPTY;
 
         if (PkTileSet.size(pkTileBag) > necessaryNbTiles) {
-            PkTileSet.sampleColoredInto(pkTileBag, factories, 0, randomGenerator);
+            TileKind.Colored[] drawnArray = new TileKind.Colored[necessaryNbTiles];
+            PkTileSet.sampleColoredInto(pkTileBag, drawnArray, 0, randomGenerator);
 
-            for (int i = 0; i < necessaryNbTiles; i++) {
-                switch (factories[i]) {
-                    case TileKind.Colored.A -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.A);
-                    case TileKind.Colored.B -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.B);
-                    case TileKind.Colored.C -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.C);
-                    case TileKind.Colored.D -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.D);
-                    case TileKind.Colored.E -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.E);
-                }
+            for (TileKind.Colored tile : drawnArray) {
+                drawnTilesMultiset = PkTileSet.add(drawnTilesMultiset, tile);
+                pkTileBag = removeColoredTile(pkTileBag, tile);
             }
-            tilesActuallyDrawn = necessaryNbTiles;
         } else {
-            int setOfTilesAdded = pkTileBag;
+            drawnTilesMultiset = pkTileBag;
             pkTileBag = pkDiscardedTiles();
-            int necessaryDiscardedTiles = Math.min(PkTileSet.size(pkDiscardedTiles()), necessaryNbTiles - PkTileSet.size(setOfTilesAdded));
 
-            TileKind.Colored[] pkDiscardedTilesTable = new TileKind.Colored[PkTileSet.size(pkDiscardedTiles())];
-            PkTileSet.copyColoredInto(pkDiscardedTiles(), pkDiscardedTilesTable);
-            TileKind.Colored.shuffle(pkDiscardedTilesTable, randomGenerator);
+            int needed = necessaryNbTiles - PkTileSet.size(drawnTilesMultiset);
+            int toDraw = Math.min(needed, PkTileSet.size(pkTileBag));
 
-            for (int i = 0; i < necessaryDiscardedTiles; i++) {
-                setOfTilesAdded = PkTileSet.add(setOfTilesAdded, pkDiscardedTilesTable[i]);
-                switch (pkDiscardedTilesTable[i]) {
-                    case TileKind.Colored.A -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.A);
-                    case TileKind.Colored.B -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.B);
-                    case TileKind.Colored.C -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.C);
-                    case TileKind.Colored.D -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.D);
-                    case TileKind.Colored.E -> pkTileBag = PkTileSet.remove(pkTileBag, TileKind.E);
+            if (toDraw > 0) {
+                TileKind.Colored[] tempArray = new TileKind.Colored[toDraw];
+                PkTileSet.sampleColoredInto(pkTileBag, tempArray, 0, randomGenerator);
+                for (TileKind.Colored tile : tempArray) {
+                    drawnTilesMultiset = PkTileSet.add(drawnTilesMultiset, tile);
+                    pkTileBag = removeColoredTile(pkTileBag, tile);
                 }
             }
-
-            PkTileSet.copyColoredInto(setOfTilesAdded, factories);
-
-            tilesActuallyDrawn = PkTileSet.size(setOfTilesAdded);
-
-            TileKind.Colored.shuffle(factories, randomGenerator);
         }
+
+        int totalDrawn = PkTileSet.size(drawnTilesMultiset);
+        TileKind.Colored[] finalDrawnArray = new TileKind.Colored[totalDrawn];
+        PkTileSet.copyColoredInto(drawnTilesMultiset, finalDrawnArray);
+        TileKind.Colored.shuffle(finalDrawnArray, randomGenerator);
 
         int tileIndex = 0;
         for (int i = 1; i < pkTileSources.size(); i++) {
             int toFill = TileSource.Factory.TILES_PER_FACTORY - PkTileSet.size(pkTileSources.get(i));
             for (int j = 0; j < toFill; j++) {
-                if (tileIndex < tilesActuallyDrawn) {
-                    pkTileSourcesEditable[i] = PkTileSet.add(pkTileSourcesEditable[i], factories[tileIndex]);
+                if (tileIndex < totalDrawn) {
+                    pkTileSourcesEditable[i] = PkTileSet.add(pkTileSourcesEditable[i], finalDrawnArray[tileIndex]);
                     tileIndex++;
                 }
             }
         }
 
         updateUniqueTilesSources();
+    }
+
+    private int removeColoredTile(int bag, TileKind.Colored coloredTile) {
+        return switch (coloredTile) {
+            case A -> PkTileSet.remove(bag, TileKind.A);
+            case B -> PkTileSet.remove(bag, TileKind.B);
+            case C -> PkTileSet.remove(bag, TileKind.C);
+            case D -> PkTileSet.remove(bag, TileKind.D);
+            case E -> PkTileSet.remove(bag, TileKind.E);
+        };
     }
 
     public void registerMove(short pkMove) {
@@ -163,7 +156,7 @@ public final class MutableGameState implements ReadOnlyGameState {
                 if (!PkPatterns.isFull(pkPatterns, (TileDestination.Pattern) destination)) {
                     PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId,
                             PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), (TileDestination.Pattern) destination, 1, PkMove.color(pkMove)));
-                } else if (PkFloor.size(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId)) == 7) {
+                } else if (PkFloor.size(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId)) == TileDestination.FLOOR.capacity()) {
                     PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
                             PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.of(1, PkMove.color(pkMove))));
                 }
@@ -220,9 +213,6 @@ public final class MutableGameState implements ReadOnlyGameState {
         }
 
         this.pkUniqueTileSources = newPkUniqueTileSource;
-        if (PkMove.source(pkMove) instanceof TileSource.Factory) {
-            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, PkMove.destination(pkMove).index());
-        }
 
     }
 
@@ -251,15 +241,21 @@ public final class MutableGameState implements ReadOnlyGameState {
             }
             PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, playerId, pkPatterns);
 
-            int pkFloor = PkPlayerStates.pkFloor(pkPlayerStates(), playerId);
-            int floorPenalty = Points.totalFloorPenalty(PkFloor.size(pkFloor));
-            points -= floorPenalty;
-            pointsObserver.floor(playerId, floorPenalty);
             int currentScore = PkPlayerStates.points(pkPlayerStates, playerId);
-            if (currentScore + points < 0) {
-                points = -currentScore;
-            }
+            int scoreBeforePenalty = currentScore + points;
+
+            int pkFloor = PkPlayerStates.pkFloor(pkPlayerStates(), playerId);
+            int theoreticalPenalty = Points.totalFloorPenalty(PkFloor.size(pkFloor));
+
+            int effectivePenalty = Math.min(scoreBeforePenalty, theoreticalPenalty);
+
+            points -= effectivePenalty;
             PkPlayerStates.addPoints(pkPlayerStatesEditable, playerId, points);
+
+            if (effectivePenalty > 0) {
+                pointsObserver.floor(playerId, effectivePenalty);
+            }
+
             if (PkFloor.containsFirstPlayerMarker(pkFloor)) {
                 pkTileSourcesEditable[TileSource.CENTER_AREA.index()] =
                         PkTileSet.add(pkTileSourcesEditable[TileSource.CENTER_AREA.index()], TileKind.FIRST_PLAYER_MARKER);
@@ -272,7 +268,7 @@ public final class MutableGameState implements ReadOnlyGameState {
     public void endGame() {
         for (PlayerId playerId : playerIds()) {
             int bonusPoints = 0;
-            int pkWall = PkPlayerStates.pkWall(pkPlayerStates, playerId);
+            int pkWall = PkPlayerStates.pkWall(pkPlayerStates(), playerId);
 
             for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
                 if (PkWall.isRowFull(pkWall, line)) {
