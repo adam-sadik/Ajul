@@ -189,26 +189,17 @@ public final class MutableGameState implements ReadOnlyGameState {
             pkTileSourcesEditable[0] = PkTileSet.remove(pkTileSourcesEditable[0], TileKind.FIRST_PLAYER_MARKER);
         }
 
-        if (destination instanceof TileDestination.Pattern && destination.capacity() > countOfColor) {
+        if (destination instanceof TileDestination.Pattern line) {
             for (int i = 0; i < countOfColor; ++i) {
-                if (!PkPatterns.isFull(pkPatterns, (TileDestination.Pattern) destination)) {
+                if (!PkPatterns.isFull(pkPatterns, line)) {
                     PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId,
-                            PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), (TileDestination.Pattern) destination, 1, PkMove.color(pkMove)));
+                            PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), line , 1, PkMove.color(pkMove)));
                 } else if (PkFloor.size(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId)) == TileDestination.FLOOR.capacity()) {
                     PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
                             PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.of(1, PkMove.color(pkMove))));
                 }
                 pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
             }
-        } else if (destination instanceof TileDestination.Pattern) {
-            PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId,
-                    PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), (TileDestination.Pattern) destination, countOfColor, color));
-            int temporaryCountOfColor = countOfColor;
-            while (temporaryCountOfColor > 0) {
-                pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
-                --temporaryCountOfColor;
-            }
-
         } else if (destination instanceof TileDestination.Floor) {
             PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
                     PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.of(countOfColor, PkMove.color(pkMove))));
