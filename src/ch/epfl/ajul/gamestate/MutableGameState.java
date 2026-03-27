@@ -105,44 +105,50 @@ public final class MutableGameState implements ReadOnlyGameState {
     public void fillFactories(RandomGenerator randomGenerator) {
         //assert isRoundOver();
         int necessaryNbTiles = (pkTileSources.size() - 1) * TileSource.Factory.TILES_PER_FACTORY;
-        int drawnTilesMultiset = PkTileSet.EMPTY;
+        int bagSize = PkTileSet.size(pkTileBag);
 
-        if (PkTileSet.size(pkTileBag) > necessaryNbTiles) {
-            TileKind.Colored[] drawnArray = new TileKind.Colored[necessaryNbTiles];
-            PkTileSet.sampleColoredInto(pkTileBag, drawnArray, 0, randomGenerator);
+        int totalToDraw;
+        TileKind.Colored[] finalDrawnArray;
 
-            for (TileKind.Colored tile : drawnArray) {
-                drawnTilesMultiset = PkTileSet.add(drawnTilesMultiset, tile);
-                pkTileBag = removeColoredTile(pkTileBag, tile);
+        if (bagSize > necessaryNbTiles) {
+            totalToDraw = necessaryNbTiles;
+            finalDrawnArray = new TileKind.Colored[totalToDraw];
+
+            PkTileSet.sampleColoredInto(pkTileBag, finalDrawnArray, 0, randomGenerator);
+            for (TileKind.Colored tile : finalDrawnArray) {
+                pkTileBag = PkTileSet.remove(pkTileBag, tile);
             }
         } else {
-            drawnTilesMultiset = pkTileBag;
-            pkTileBag = pkDiscardedTiles();
+            int discarded = pkDiscardedTiles();
+            int discardSize = PkTileSet.size(discarded);
+            totalToDraw = Math.min(necessaryNbTiles, bagSize + discardSize);
+            finalDrawnArray = new TileKind.Colored[totalToDraw];
 
-            int needed = necessaryNbTiles - PkTileSet.size(drawnTilesMultiset);
-            int toDraw = Math.min(needed, PkTileSet.size(pkTileBag));
-
-            if (toDraw > 0) {
-                TileKind.Colored[] tempArray = new TileKind.Colored[toDraw];
-                PkTileSet.sampleColoredInto(pkTileBag, tempArray, 0, randomGenerator);
-                for (TileKind.Colored tile : tempArray) {
-                    drawnTilesMultiset = PkTileSet.add(drawnTilesMultiset, tile);
-                    pkTileBag = removeColoredTile(pkTileBag, tile);
-                }
+            if (bagSize > 0) {
+                TileKind.Colored[] tempRemaining = new TileKind.Colored[bagSize];
+                PkTileSet.copyColoredInto(pkTileBag, tempRemaining);
+                System.arraycopy(tempRemaining, 0, finalDrawnArray, 0, bagSize);
             }
 
+            pkTileBag = discarded;
+
+            int needed = totalToDraw - bagSize;
+            if (needed > 0) {
+                TileKind.Colored[] tempDrawn = new TileKind.Colored[needed];
+                PkTileSet.sampleColoredInto(pkTileBag, tempDrawn, 0, randomGenerator);
+                System.arraycopy(tempDrawn, 0, finalDrawnArray, bagSize, needed);
+                for (TileKind.Colored tile : tempDrawn) {
+                    pkTileBag = PkTileSet.remove(pkTileBag, tile);
+                }
+            }
         }
 
-        int totalDrawn = PkTileSet.size(drawnTilesMultiset);
-        TileKind.Colored[] finalDrawnArray = new TileKind.Colored[totalDrawn];
-        PkTileSet.copyColoredInto(drawnTilesMultiset, finalDrawnArray);
         TileKind.Colored.shuffle(finalDrawnArray, randomGenerator);
 
         int tileIndex = 0;
         for (int i = 1; i < pkTileSources.size(); i++) {
-            int toFill = TileSource.Factory.TILES_PER_FACTORY - PkTileSet.size(pkTileSources.get(i));
-            for (int j = 0; j < toFill; j++) {
-                if (tileIndex < totalDrawn) {
+            for (int j = 0; j < TileSource.Factory.TILES_PER_FACTORY; j++) {
+                if (tileIndex < totalToDraw) {
                     pkTileSourcesEditable[i] = PkTileSet.add(pkTileSourcesEditable[i], finalDrawnArray[tileIndex]);
                     tileIndex++;
                 }
@@ -152,15 +158,6 @@ public final class MutableGameState implements ReadOnlyGameState {
         updateUniqueTilesSources();
     }
 
-    private int removeColoredTile(int bag, TileKind.Colored coloredTile) {
-        return switch (coloredTile) {
-            case A -> PkTileSet.remove(bag, TileKind.A);
-            case B -> PkTileSet.remove(bag, TileKind.B);
-            case C -> PkTileSet.remove(bag, TileKind.C);
-            case D -> PkTileSet.remove(bag, TileKind.D);
-            case E -> PkTileSet.remove(bag, TileKind.E);
-        };
-    }
     /// Enregistre et applique un coup joué par le joueur courant.
     /// Cette méthode déplace les tuiles de la source choisie vers la destination,
     /// gère les tuiles restantes (vers la zone centrale ou le plancher),
