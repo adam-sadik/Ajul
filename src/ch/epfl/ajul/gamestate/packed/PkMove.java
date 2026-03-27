@@ -30,38 +30,38 @@ public final class PkMove {
 
     /// Retourne la représentation empaquetée du coup défini par la source, la couleur et la destination données
     /// @param source la source
-    /// @param destination la destination
     /// @param color la couleur
+    /// @param destination la destination
     /// @return le coup empaqueté correspondant
     public static short pack(TileSource source, TileKind.Colored color, TileDestination destination) {
     int sourceIndex = source.index() << SOURCE_OFFSET;
     int colorIndex = color.index() << COLOR_OFFSET;
     int destinationIndex = destination.index() << DESTINATION_OFFSET;
 
-    return (short) ((sourceIndex | colorIndex)|destinationIndex);
+    return (short) (sourceIndex | colorIndex| destinationIndex);
     }
 
     /// Retoune la source du coup empaqueté donnée
     /// @return la source correspondante
     public static TileSource source(short pkMove) {
-        int sourceIndex = (pkMove & SOURCE_MASK) >> SOURCE_OFFSET;
-        //assert sourceIndex < TileSource.ALL.size();
+        int sourceIndex = (pkMove & SOURCE_MASK) >>> SOURCE_OFFSET;
+        assert sourceIndex < TileSource.ALL.size();
         return TileSource.ALL.get(sourceIndex);
     }
 
     /// Retourne la couleur du coup empaqueté donné
     /// @return la couleur courrespondante
     public static TileKind.Colored color(short pkMove){
-        int colorIndex = ( pkMove & COLOR_MASK) >> COLOR_OFFSET;
-        //assert colorIndex < TileKind.Colored.ALL.size();
+        int colorIndex = (pkMove & COLOR_MASK) >>> COLOR_OFFSET;
+        assert colorIndex < TileKind.Colored.ALL.size();
         return TileKind.Colored.ALL.get(colorIndex);
     }
 
     /// Retourne la destination du coup empaqueté donné
     /// @return la destination correspondante
     public static TileDestination destination(short pkMove){
-        int destinationIndex = ( pkMove & DESTINATION_MASK) >> DESTINATION_OFFSET;
-        //assert destinationIndex < TileDestination.ALL.size();
+        int destinationIndex = (pkMove & DESTINATION_MASK) >>> DESTINATION_OFFSET;
+        assert destinationIndex < TileDestination.ALL.size();
         return TileDestination.ALL.get(destinationIndex);
     }
 

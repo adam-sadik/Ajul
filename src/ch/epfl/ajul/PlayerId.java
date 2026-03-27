@@ -8,9 +8,9 @@ public enum PlayerId {
     P1,
     /// Joueur 2
     P2,
-    ///  Joueur 3
+    /// Joueur 3
     P3,
-    ///  Joeuur 4
+    /// Joueur 4
     P4;
 
 

@@ -15,6 +15,9 @@ import java.util.random.RandomGenerator;
 /// @author Adam Ghali SADIK (412029)
 public final class PkTileSet {
 
+    private static final int TILE_KIND_BITS = 6;
+    private static final int TILE_KIND_MASK = (1 << TILE_KIND_BITS) - 1;
+
     /// L'ensemble de tuiles vide.
     public static final int EMPTY = 0;
 
@@ -23,9 +26,6 @@ public final class PkTileSet {
 
     /// L'ensemble de tuiles plein, sans le marqueur de premier joueur (20 tuiles de chaque couleur).
     public static final int FULL_COLORED = computeFull(false);
-
-    private static final int TILE_KIND_BITS = 6;
-    private static final int TILE_KIND_MASK = (1 << TILE_KIND_BITS) - 1;
 
 
 
@@ -58,7 +58,7 @@ public final class PkTileSet {
     /// @return l'ensemble de tuiles empaqueté
     public static int of(int count, TileKind tileKind) {
         int result = count << (tileKind.index() * TILE_KIND_BITS);
-        //assert isValid(result);
+        assert isValid(result);
         return result;
     }
 
@@ -118,7 +118,7 @@ public final class PkTileSet {
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int add(int pkTileSet, TileKind tileKind) {
         int result = pkTileSet + of(1, tileKind);
-        //assert isValid(result);
+        assert isValid(result);
         return result;
     }
 
@@ -131,7 +131,7 @@ public final class PkTileSet {
     /// @return le nouvel ensemble de tuiles empaqueté
     public static int remove(int pkTileSet, TileKind tileKind) {
         int result = pkTileSet - of(1, tileKind);
-        //assert isValid(result);
+        assert isValid(result);
         return result;
     }
 
@@ -144,7 +144,7 @@ public final class PkTileSet {
     /// @return l'union des deux ensembles
     public static int union(int pkTileSet1, int pkTileSet2) {
         int result = pkTileSet1 + pkTileSet2;
-        //assert isValid(result);
+        assert isValid(result);
         return result;
     }
 
@@ -157,7 +157,7 @@ public final class PkTileSet {
     /// @return la différence des deux ensembles
     public static int difference(int pkTileSet1, int pkTileSet2) {
         int result = pkTileSet1 - pkTileSet2;
-        //assert isValid(result);
+        assert isValid(result);
         return result;
     }
 
