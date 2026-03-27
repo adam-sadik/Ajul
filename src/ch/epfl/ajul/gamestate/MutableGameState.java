@@ -103,42 +103,32 @@ public final class MutableGameState implements ReadOnlyGameState {
     ///
     /// @param randomGenerator le générateur de nombres aléatoires utilisé pour tirer les tuiles
     public void fillFactories(RandomGenerator randomGenerator) {
-        //assert isRoundOver();
         int necessaryNbTiles = (pkTileSources.size() - 1) * TileSource.Factory.TILES_PER_FACTORY;
         int bagSize = PkTileSet.size(pkTileBag);
 
-        int totalToDraw;
-        TileKind.Colored[] finalDrawnArray;
+        int discarded = pkDiscardedTiles();
+        int discardSize = PkTileSet.size(discarded);
 
-        if (bagSize > necessaryNbTiles) {
-            totalToDraw = necessaryNbTiles;
-            finalDrawnArray = new TileKind.Colored[totalToDraw];
+        int totalToDraw = (bagSize >= necessaryNbTiles)
+                ? necessaryNbTiles
+                : Math.min(necessaryNbTiles, bagSize + discardSize);
 
+        TileKind.Colored[] finalDrawnArray = new TileKind.Colored[totalToDraw];
+
+        if (bagSize >= necessaryNbTiles) {
             PkTileSet.sampleColoredInto(pkTileBag, finalDrawnArray, 0, randomGenerator);
             for (TileKind.Colored tile : finalDrawnArray) {
                 pkTileBag = PkTileSet.remove(pkTileBag, tile);
             }
         } else {
-            int discarded = pkDiscardedTiles();
-            int discardSize = PkTileSet.size(discarded);
-            totalToDraw = Math.min(necessaryNbTiles, bagSize + discardSize);
-            finalDrawnArray = new TileKind.Colored[totalToDraw];
-
-            if (bagSize > 0) {
-                TileKind.Colored[] tempRemaining = new TileKind.Colored[bagSize];
-                PkTileSet.copyColoredInto(pkTileBag, tempRemaining);
-                System.arraycopy(tempRemaining, 0, finalDrawnArray, 0, bagSize);
-            }
+            int offset = PkTileSet.copyColoredInto(pkTileBag, finalDrawnArray);
 
             pkTileBag = discarded;
 
-            int needed = totalToDraw - bagSize;
-            if (needed > 0) {
-                TileKind.Colored[] tempDrawn = new TileKind.Colored[needed];
-                PkTileSet.sampleColoredInto(pkTileBag, tempDrawn, 0, randomGenerator);
-                System.arraycopy(tempDrawn, 0, finalDrawnArray, bagSize, needed);
-                for (TileKind.Colored tile : tempDrawn) {
-                    pkTileBag = PkTileSet.remove(pkTileBag, tile);
+            if (offset < totalToDraw) {
+                PkTileSet.sampleColoredInto(pkTileBag, finalDrawnArray, offset, randomGenerator);
+                for (int i = offset; i < totalToDraw; i++) {
+                    pkTileBag = PkTileSet.remove(pkTileBag, finalDrawnArray[i]);
                 }
             }
         }
