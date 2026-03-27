@@ -160,44 +160,49 @@ public final class MutableGameState implements ReadOnlyGameState {
         TileKind.Colored color = PkMove.color(pkMove);
         TileDestination destination = PkMove.destination(pkMove);
         int countOfColor = PkTileSet.countOf(pkTileSources.get(source.index()), color);
-        int pkPatterns = PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId);
+
 
         if (source instanceof TileSource.Factory) {
-            for (int i = 0; i < TileKind.Colored.ALL.size(); i++) {
-                TileKind.Colored colorI = TileKind.Colored.ALL.get(i);
-                int nbOfColorITiles = PkTileSet.countOf(pkTileSources.get(source.index()), colorI);
-                while (nbOfColorITiles > 0
-                        && colorI != color) {
-                    pkTileSourcesEditable[0] = PkTileSet.add(pkTileSourcesEditable[0], colorI);
-                    pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], colorI);
-                    --nbOfColorITiles;
-                }
+            int initialSource = pkTileSourcesEditable[source.index()];
+            int chosenTiles = PkTileSet.of(countOfColor, color);
+            int unchosenTiles = PkTileSet.difference(initialSource, chosenTiles);
+
+            pkTileSourcesEditable[0] = PkTileSet.union(pkTileSourcesEditable[0], unchosenTiles);
+            pkTileSourcesEditable[source.index()] = PkTileSet.EMPTY;
+
+        } else if (source instanceof TileSource.CenterArea ) {
+            if ( PkTileSet.countOf(pkTileSources.get(source.index()), TileKind.FIRST_PLAYER_MARKER) > 0) {
+                int currentFloor = PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId);
+                int markerSet = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
+                PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
+                        PkFloor.withAddedTiles(currentFloor, markerSet));
+                pkTileSourcesEditable[0] = PkTileSet.remove(pkTileSourcesEditable[0], TileKind.FIRST_PLAYER_MARKER);
             }
-        } else if (source instanceof TileSource.CenterArea && PkTileSet.countOf(pkTileSources.get(source.index()), TileKind.FIRST_PLAYER_MARKER) > 0) {
-            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
-                    PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.difference(PkTileSet.FULL, PkTileSet.FULL_COLORED)));
-            pkTileSourcesEditable[0] = PkTileSet.remove(pkTileSourcesEditable[0], TileKind.FIRST_PLAYER_MARKER);
+                int chosenTiles = PkTileSet.of(countOfColor, color);
+                pkTileSourcesEditable[0] = PkTileSet.difference(pkTileSourcesEditable[0], chosenTiles);
         }
 
         if (destination instanceof TileDestination.Pattern line) {
-            for (int i = 0; i < countOfColor; ++i) {
-                if (!PkPatterns.isFull(pkPatterns, line)) {
-                    PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId,
-                            PkPatterns.withAddedTiles(PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId), line , 1, PkMove.color(pkMove)));
-                } else if (PkFloor.size(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId)) == TileDestination.FLOOR.capacity()) {
-                    PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
-                            PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.of(1, PkMove.color(pkMove))));
-                }
-                pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
+            int currentPatterns = PkPlayerStates.pkPatterns(pkPlayerStates, currentPlayerId);
+            int currentSize = PkPatterns.size(currentPatterns, line);
+            int capacity = line.capacity();
+            int spaceLeft = capacity - currentSize;
+            int toPattern = Math.min(countOfColor, spaceLeft);
+            int toFloor = countOfColor - toPattern;
+            if (toPattern > 0) {
+                int newPatterns = PkPatterns.withAddedTiles(currentPatterns, line, toPattern, color);
+                PkPlayerStates.setPkPatterns(pkPlayerStatesEditable, currentPlayerId, newPatterns);
+            }
+            if (toFloor > 0) {
+                int currentFloor = PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId);
+                int newFloor = PkFloor.withAddedTiles(currentFloor, PkTileSet.of(toFloor, color));
+                PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId, newFloor);
             }
         } else if (destination instanceof TileDestination.Floor) {
-            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId,
-                    PkFloor.withAddedTiles(PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId), PkTileSet.of(countOfColor, PkMove.color(pkMove))));
-            int temporaryCountOfColor = countOfColor;
-            while (temporaryCountOfColor > 0) {
-                pkTileSourcesEditable[source.index()] = PkTileSet.remove(pkTileSourcesEditable[source.index()], color);
-                --temporaryCountOfColor;
-            }
+            int currentFloor = PkPlayerStates.pkFloor(pkPlayerStates, currentPlayerId);
+            int newFloor = PkFloor.withAddedTiles(currentFloor, PkTileSet.of(countOfColor, color));
+            PkPlayerStates.setPkFloor(pkPlayerStatesEditable, currentPlayerId, newFloor);
+
         }
 
         currentPlayerId = game.playerIds().get((currentPlayerId.ordinal() + 1) % game.playersCount());
