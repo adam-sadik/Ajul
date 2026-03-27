@@ -5,7 +5,7 @@ import java.util.Arrays;
 /// Classe-mère abstraite pour les différentes mises en œuvre de tableaux d'entiers.
 ///
 /// @author Rayane Taoufik Benchekroun (412052)
-public abstract class AbstractIntArray implements ReadOnlyIntArray{
+public abstract class AbstractIntArray implements ReadOnlyIntArray {
 
     private final int[] elements;
 
@@ -13,7 +13,7 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
     /// Ce constructeur est destiné à être utilisé par les sous-classes.
     ///
     /// @param elements le tableau primitif contenant les éléments à stocker
-    protected AbstractIntArray (int[] elements){
+    protected AbstractIntArray(int[] elements){
         this.elements = elements;
     }
 
@@ -32,7 +32,7 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
     public int get(int i) {
         return elements[i];
     }
-    /// retourne un tableau d'entier immuable ayant les mêmes éléments
+    /// Retourne un tableau d'entier immuable ayant les mêmes éléments
     /// et la même taille que le tableau auquel on applique la méthode.
     /// @return un tableau d'entier immuable ayant les mêmes éléments
     /// et la même taille que le tableau auquel on applique la méthode.
@@ -40,17 +40,17 @@ public abstract class AbstractIntArray implements ReadOnlyIntArray{
     public ImmutableIntArray immutable() {
         return ImmutableIntArray.copyOf(elements);
     }
-    /// retourne une copie du tableau primitif interne (obtenue par clonage)
+    /// Retourne une copie du tableau primitif interne (obtenue par clonage)
     /// @return une copie du tableau primitif interne (obtenue par clonage)
     @Override
     public int[] toArray() {
         return elements.clone();
     }
 
-    /// retourne une représentation textuelle du tableau identique à Arrays.toString
+    /// Retourne une représentation textuelle du tableau identique à Arrays.toString
     /// @return une représentation textuelle du tableau identique à Arrays.toString
     @Override
     public String toString() {
-        return Arrays.toString(elements) ;
+        return Arrays.toString(elements);
     }
 }

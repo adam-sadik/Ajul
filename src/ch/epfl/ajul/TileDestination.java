@@ -40,7 +40,7 @@ public sealed interface TileDestination {
         PATTERN_1, PATTERN_2, PATTERN_3, PATTERN_4, PATTERN_5;
 
         /// Liste immuable de toutes les lignes de motif.
-        public static final List<TileDestination.Pattern> ALL = List.of(values());
+        public static final List<Pattern> ALL = List.of(values());
         /// Nombre de lignes de motif (5).
         public static final int COUNT = ALL.size();
 

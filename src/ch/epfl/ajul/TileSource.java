@@ -58,7 +58,7 @@ public sealed interface TileSource {
         /// Nombre de tuiles contenues par fabrique au début d'une manche (4).
         public static final int TILES_PER_FACTORY = 4;
         /// Liste immuable de toutes les fabriques.
-        public static final List<TileSource.Factory> ALL = List.of(values());
+        public static final List<Factory> ALL = List.of(values());
         /// Nombre total de fabriques (9).
         public static final int COUNT = ALL.size();
 

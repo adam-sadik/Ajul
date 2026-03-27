@@ -7,6 +7,11 @@ import java.util.StringJoiner;
 import java.util.random.RandomGenerator;
 
 /// Classe utilitaire permettant de manipuler des ensembles de tuiles empaquetés.
+/// - le nombre de tuiles de couleur A, compris entre 0 et 20 (inclus), est stocké dans les 6 bits de poids faible (index 0 à 5),
+/// - le nombre de tuiles de couleur B est stocké dans les 6 bits suivants (index 6 à 11),
+/// -  et ainsi de suite pour les couleurs C, D et E,
+/// - le nombre de marqueurs de premier joueur, compris entre 0 et 1 (inclus), est stocké dans le bit d'index 30,
+///  et le bit de poids le plus fort (index 31) vaut toujours 0.
 /// @author Adam Ghali SADIK (412029)
 public final class PkTileSet {
 
