@@ -25,36 +25,15 @@ public final class PkWall {
     private static final int COLOR_MASK_C = 0b00010_00001_10000_01000_00100;
     private static final int COLOR_MASK_D = 0b00100_00010_00001_10000_01000;
     private static final int COLOR_MASK_E = 0b01000_00100_00010_00001_10000;
+
+    private static final int[] COLOR_MASKS = {
+            COLOR_MASK_A, COLOR_MASK_B, COLOR_MASK_C, COLOR_MASK_D, COLOR_MASK_E
+    };
+
     private static final int ROW0_MASK = 0b00000_00000_00000_00000_11111;
     private static final int COLUMN_MASK = 0b00001_00001_00001_00001_00001;
 
 
-    private static int countHorizontal(int pkWall, TileDestination.Pattern line, int startCol, int step) {
-        //assert startCol >= 0 && startCol < WALL_WIDTH;
-        int count = 0;
-        int col = startCol + step;
-        while (col >= 0 && col < WALL_WIDTH && hasTileAt(pkWall, line, colorAt(line, col))) {
-            count++;
-            col += step;
-        }
-        return count;
-    }
-
-    private static int countVertical(int pkWall, int col, int startRow, int step) {
-        //assert col >= 0 && col < WALL_WIDTH;
-        //assert startRow >= 0 && startRow < WALL_HEIGHT;
-        int count = 0;
-        int row = startRow + step;
-        while (row >= 0 && row < WALL_HEIGHT) {
-            TileDestination.Pattern currentLine = TileDestination.Pattern.ALL.get(row);
-            if (!hasTileAt(pkWall, currentLine, colorAt(currentLine, col))) {
-                break;
-            }
-            count++;
-            row += step;
-        }
-        return count;
-    }
 
     /// Calcule l'index (0-24) d'une case du mur à partir de sa ligne et sa couleur.
     /// @param line La ligne de motif correspondante.
@@ -69,7 +48,7 @@ public final class PkWall {
     /// @param color La couleur de la tuile.
     /// @return L'index de la colonne.
     public static int column(TileDestination.Pattern line, TileKind.Colored color) {
-        return ((line.index() + color.index()) % WALL_WIDTH);
+        return (line.index() + color.index()) % WALL_WIDTH;
     }
 
     /// Détermine la couleur acceptée par une case spécifique du mur.
@@ -77,8 +56,9 @@ public final class PkWall {
     /// @param column La colonne du mur.
     /// @return La couleur correspondante.
     public static TileKind.Colored colorAt(TileDestination.Pattern line, int column) {
-        //assert column >= 0 && column < WALL_WIDTH;
-        return TileKind.Colored.ALL.get((line.index() * 4 + column) % WALL_HEIGHT);
+        assert column >= 0 && column < WALL_WIDTH;
+        int colorIndex = (line.index() * 4 + column) % TileKind.Colored.COUNT;
+        return TileKind.Colored.ALL.get(colorIndex);
     }
 
     /// Ajoute une tuile au mur.
@@ -87,7 +67,7 @@ public final class PkWall {
     /// @param color La couleur de la tuile à ajouter.
     /// @return Le mur mis à jour.
     public static int withTileAt(int pkWall, TileDestination.Pattern line, TileKind.Colored color) {
-        return pkWall | (1 << (indexOf(line, color)));
+        return PkIntSet32.add(pkWall, indexOf(line, color));
     }
 
     /// Vérifie si une case précise contient déjà une tuile.
@@ -96,7 +76,7 @@ public final class PkWall {
     /// @param color La couleur de la tuile.
     /// @return Vrai si la case est occupée.
     public static boolean hasTileAt(int pkWall, TileDestination.Pattern line, TileKind.Colored color) {
-        return ((pkWall >> (indexOf(line, color)) & 1) == 1);
+        return PkIntSet32.contains(pkWall, indexOf(line, color));
     }
 
     /// Calcule la taille du groupe horizontal auquel appartient une tuile.
@@ -105,8 +85,16 @@ public final class PkWall {
     /// @param color La couleur de la tuile.
     /// @return La taille du groupe horizontal (1 à 5).
     public static int hGroupSize(int pkWall, TileDestination.Pattern line, TileKind.Colored color) {
+        int row = line.index();
         int col = column(line, color);
-        return 1 + countHorizontal(pkWall, line, col, 1) + countHorizontal(pkWall, line, col, -1);
+        int count = 1;
+
+        // Vers la gauche
+        for (int c = col - 1; c >= 0 && PkIntSet32.contains(pkWall, row * WALL_WIDTH + c); c--) count++;
+        // Vers la droite
+        for (int c = col + 1; c < WALL_WIDTH && PkIntSet32.contains(pkWall, row * WALL_WIDTH + c); c++) count++;
+
+        return count;
     }
 
     /// Calcule la taille du groupe vertical auquel appartient une tuile.
@@ -115,9 +103,16 @@ public final class PkWall {
     /// @param color La couleur de la tuile.
     /// @return La taille du groupe vertical (1 à 5).
     public static int vGroupSize(int pkWall, TileDestination.Pattern line, TileKind.Colored color) {
-        int col = column(line, color);
         int row = line.index();
-        return 1 + countVertical(pkWall, col, row, 1) + countVertical(pkWall, col, row, -1);
+        int col = column(line, color);
+        int count = 1;
+
+        // Vers le haut
+        for (int r = row - 1; r >= 0 && PkIntSet32.contains(pkWall, r * WALL_WIDTH + col); r--) count++;
+        // Vers le bas
+        for (int r = row + 1; r < WALL_HEIGHT && PkIntSet32.contains(pkWall, r * WALL_WIDTH + col); r++) count++;
+
+        return count;
     }
 
     /// Vérifie si le mur possède au moins une ligne complète.
@@ -134,12 +129,22 @@ public final class PkWall {
     }
 
 
+    /// Vérifie si une ligne spécifique du mur est complète.
+    ///
+    /// @param pkWall le mur empaqueté
+    /// @param line la ligne à vérifier
+    /// @return vrai si les 5 cases de la ligne sont occupées
     public static boolean isRowFull(int pkWall, TileDestination.Pattern line) {
         return PkIntSet32.containsAll(pkWall, ROW0_MASK << line.index() * WALL_WIDTH);
     }
 
+    /// Vérifie si une colonne spécifique du mur est complète.
+    ///
+    /// @param pkWall le mur empaqueté
+    /// @param column l'index de la colonne (0 à 4) à vérifier
+    /// @return vrai si les 5 cases de la colonne sont occupées
     public static boolean isColumnFull(int pkWall, int column) {
-        //assert column >= 0 && column < WALL_WIDTH;
+        assert column >= 0 && column < WALL_WIDTH;
         return PkIntSet32.containsAll(pkWall, COLUMN_MASK << column);
     }
 
@@ -149,13 +154,7 @@ public final class PkWall {
     /// @param color La couleur à vérifier.
     /// @return Vrai si les 5 tuiles de cette couleur sont posées.
     public static boolean isColorFull(int pkWall, TileKind.Colored color) {
-        return switch (color){
-            case TileKind.Colored.A -> PkIntSet32.containsAll(pkWall, COLOR_MASK_A);
-            case TileKind.Colored.B -> PkIntSet32.containsAll(pkWall, COLOR_MASK_B);
-            case TileKind.Colored.C -> PkIntSet32.containsAll(pkWall, COLOR_MASK_C);
-            case TileKind.Colored.D -> PkIntSet32.containsAll(pkWall, COLOR_MASK_D);
-            case TileKind.Colored.E -> PkIntSet32.containsAll(pkWall, COLOR_MASK_E);
-        };
+        return PkIntSet32.containsAll(pkWall, COLOR_MASKS[color.index()]);
 
     }
 
@@ -163,25 +162,20 @@ public final class PkWall {
     /// @param pkWall Le mur empaqueté.
     /// @return Un entier représentant l'ensemble des tuiles du mur.
     public static int asPkTileSet(int pkWall) {
-        int countA = Integer.bitCount(pkWall & COLOR_MASK_A);
-        int countB = Integer.bitCount(pkWall & COLOR_MASK_B);
-        int countC = Integer.bitCount(pkWall & COLOR_MASK_C);
-        int countD = Integer.bitCount(pkWall & COLOR_MASK_D);
-        int countE = Integer.bitCount(pkWall & COLOR_MASK_E);
-
-        int packedA = PkTileSet.of(countA, TileKind.Colored.A);
-        int packedB = PkTileSet.of(countB, TileKind.Colored.B);
-        int packedC = PkTileSet.of(countC, TileKind.Colored.C);
-        int packedD = PkTileSet.of(countD, TileKind.Colored.D);
-        int packedE = PkTileSet.of(countE, TileKind.Colored.E);
-
-        int unionA_B = PkTileSet.union(packedA, packedB);
-        int unionC_D = PkTileSet.union(packedC, packedD);
-        int unionA_B_C_D = PkTileSet.union(unionA_B, unionC_D);
-
-        return PkTileSet.union(unionA_B_C_D, packedE);
+        int pkTileSet = PkTileSet.EMPTY;
+        for (TileKind.Colored color : TileKind.Colored.ALL) {
+            int count = Integer.bitCount(pkWall & COLOR_MASKS[color.index()]);
+            if (count > 0) {
+                pkTileSet = PkTileSet.union(pkTileSet, PkTileSet.of(count, color));
+            }
+        }
+        return pkTileSet;
     }
 
+    /// Retourne la représentation textuelle du mur.
+    ///
+    /// @param pkWall le mur empaqueté
+    /// @return une chaîne décrivant le mur (majuscules si occupé, minuscules sinon)
     public static String toString(int pkWall){
         StringJoiner joiner = new StringJoiner(", ", "[", "]");
 
