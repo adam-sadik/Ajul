@@ -9,9 +9,10 @@ import java.util.Objects;
 /// @author Rayane TAOUFIK BENCHEKROUN (412052)
 public final class Game {
 
-    private final List<PlayerDescription> playerDescriptions;
     private static final int MIN_PLAYERS = 2;
     private static final int MAX_PLAYERS = 4;
+    private final List<PlayerDescription> playerDescriptions;
+
 
     /// Construit une configuration de partie pour les joueurs donnés.
     ///
@@ -25,7 +26,6 @@ public final class Game {
     ///         si le nombre de joueurs n'est pas compris entre 2 et 4
     ///         ou si l'ordre des identités est incorrect
     public Game(List<PlayerDescription> playerDescriptions) {
-        assert playerDescriptions != null;
         Preconditions.checkArgument(playerDescriptions.size() >= MIN_PLAYERS && playerDescriptions.size() <= MAX_PLAYERS);
         for (int i = 0; i < playerDescriptions.size(); ++i) {
             Preconditions.checkArgument(playerDescriptions.get(i).id() == PlayerId.ALL.get(i));
@@ -91,7 +91,7 @@ public final class Game {
     ///
     /// @return la taille maximale de la zone centrale
     public int centralAreaMaxSize() {
-        return (TileSource.Factory.TILES_PER_FACTORY - 1 ) * factoriesCount() + 1;
+        return (TileSource.Factory.TILES_PER_FACTORY - 1) * factoriesCount() + 1;
     }
 
     /// Décrit un joueur participant à la partie.
