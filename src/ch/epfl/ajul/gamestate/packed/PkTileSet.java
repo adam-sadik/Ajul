@@ -32,21 +32,21 @@ public final class PkTileSet {
     private static int computeFull(boolean includeMarker) {
         int set = EMPTY;
         for (TileKind.Colored color : TileKind.Colored.ALL) {
-            set = union(set, of(20, color));
+            set = union(set, of(color.tilesCount(), color));
         }
         if (includeMarker) {
-            set = union(set, of(1, TileKind.FIRST_PLAYER_MARKER));
+            set = union(set, of(TileKind.FIRST_PLAYER_MARKER.tilesCount(), TileKind.FIRST_PLAYER_MARKER));
         }
         return set;
     }
 
     private static boolean isValid(int pkTileSet) {
         for (TileKind.Colored color : TileKind.Colored.ALL) {
-            if (countOf(pkTileSet, color) > 20) {
+            if (countOf(pkTileSet, color) > color.tilesCount()) {
                 return false;
             }
         }
-        return countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) <= 1;
+        return countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) <= TileKind.FIRST_PLAYER_MARKER.tilesCount();
     }
 
     /// Retourne un ensemble de tuiles empaqueté ne contenant que le nombre spécifié de tuiles de la sorte donnée.
@@ -81,7 +81,9 @@ public final class PkTileSet {
         int sum = pkTileSet + shifted;
 
         int aPlusB = sum & TILE_KIND_MASK;
+        // On décale de 2 blocs (12 bits) pour récupérer C+D
         int cPlusD = (sum >>> (2 * TILE_KIND_BITS)) & TILE_KIND_MASK;
+        // On décale de 4 blocs (24 bits) pour récupérer E+M
         int ePlusM = (sum >>> (4 * TILE_KIND_BITS)) & TILE_KIND_MASK;
 
         return aPlusB + cPlusD + ePlusM;
