@@ -41,12 +41,19 @@ public final class PkTileSet {
     }
 
     private static boolean isValid(int pkTileSet) {
-        for (TileKind.Colored color : TileKind.Colored.ALL) {
-            if (countOf(pkTileSet, color) > color.tilesCount()) {
-                return false;
-            }
-        }
-        return countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) <= TileKind.FIRST_PLAYER_MARKER.tilesCount();
+        int difference = FULL - pkTileSet;
+
+        // Les bits de séparation sont aux index 6, 12, 18, 24, 30 et 31.
+        // On crée un masque avec des 1 uniquement à ces positions.
+        // En binaire : 1100 0001 0000 0100 0001 0000 0100 0000
+        // En hexa : 0xC1041040
+        int separatorMask = 0xC1041040;
+
+        // Si la différence possède un 1 sur un bit de séparation, c'est qu'il y a eu un débordement.
+        // Donc si le "et" bit-à-bit n'est pas nul, l'ensemble est invalide.
+        // Il faut aussi s'assurer qu'aucun compteur n'est négatif en soi (ce qui allumerait le bit de signe).
+        return (difference & separatorMask) == 0 && pkTileSet >= 0;
+
     }
 
     /// Retourne un ensemble de tuiles empaqueté ne contenant que le nombre spécifié de tuiles de la sorte donnée.
