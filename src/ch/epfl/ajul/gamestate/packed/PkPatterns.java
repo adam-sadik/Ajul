@@ -18,6 +18,12 @@ public final class PkPatterns {
     /// Représente les lignes de motif vides.
     public static final int EMPTY = 0;
 
+    private static final int BITS_PER_LINE = 6;
+    private static final int SIZE_BITS = 3;
+    private static final int SIZE_MASK = (1 << SIZE_BITS) - 1;
+    private static final int LINE_MASK = (1 << BITS_PER_LINE) - 1;
+
+
 
     /// Retourne le nombre de tuiles présentes sur la ligne de motif donnée.
     ///
@@ -27,7 +33,7 @@ public final class PkPatterns {
     ///        la ligne de motif ciblée
     /// @return le nombre de tuiles présentes sur cette ligne
     public static int size(int pkPatterns, TileDestination.Pattern line) {
-        return (pkPatterns >>> (6 * line.index())) & 0b111;
+        return (pkPatterns >>> (BITS_PER_LINE * line.index())) & SIZE_MASK;
     }
 
     /// Retourne la couleur des tuiles présentes sur la ligne de motif donnée.
@@ -38,8 +44,8 @@ public final class PkPatterns {
     ///        la ligne de motif ciblée
     /// @return la couleur des tuiles
     public static TileKind.Colored color(int pkPatterns, TileDestination.Pattern line) {
-        //assert size(pkPatterns, line) > 0;
-        int pkColor = (pkPatterns >>> (6 * line.index() + 3)) & 0b111;
+        assert size(pkPatterns, line) > 0;
+        int pkColor = (pkPatterns >>> (BITS_PER_LINE * line.index() + SIZE_BITS)) & SIZE_MASK;
         return TileKind.Colored.ALL.get(pkColor);
     }
 
@@ -80,16 +86,17 @@ public final class PkPatterns {
     ///        la couleur des tuiles ajoutées
     /// @return les nouvelles lignes de motif empaquetées
     public static int withAddedTiles(int pkPatterns, TileDestination.Pattern line, int tileCount, TileKind.Colored color) {
-        //assert tileCount >= 0;
-        //assert canContain(pkPatterns, line, color);
-        //assert size(pkPatterns, line) + tileCount <= line.capacity();
+        assert tileCount >= 0;
+        assert canContain(pkPatterns, line, color);
+        assert size(pkPatterns, line) + tileCount <= line.capacity();
 
         int newSize = size(pkPatterns, line) + tileCount;
         int newColorIndex = color.ordinal();
-        int newBlock = newSize | (newColorIndex << 3);
-        int clearedPatterns = pkPatterns & ~(0b111111 << (6 * line.index()));
+        int newBlock = newSize | (newColorIndex << SIZE_BITS);
+        int shift = BITS_PER_LINE * line.index();
+        int clearedPatterns = pkPatterns & ~(LINE_MASK << shift);
 
-        return clearedPatterns | (newBlock << (6 * line.index()));
+        return clearedPatterns | (newBlock << shift);
     }
 
     /// Retourne des lignes de motif empaquetées identiques à celles données,
@@ -101,7 +108,7 @@ public final class PkPatterns {
     ///        la ligne de motif à vider
     /// @return les nouvelles lignes de motif empaquetées
     public static int withEmptyLine(int pkPatterns, TileDestination.Pattern line) {
-        return pkPatterns & ~(0b111111 << (6 * line.index()));
+        return pkPatterns & ~(LINE_MASK << (BITS_PER_LINE * line.index()));
     }
 
     /// Retourne l'ensemble de tuiles empaqueté constitué de toutes les tuiles
@@ -133,14 +140,10 @@ public final class PkPatterns {
         for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
             int currentSize = size(pkPatterns, line);
             int emptySpots = line.capacity() - currentSize;
-            String lineRepresentation = "";
 
-            if (currentSize > 0) {
-                TileKind.Colored color = color(pkPatterns, line);
-                lineRepresentation += color.name().repeat(currentSize);
-            }
-            lineRepresentation += ".".repeat(emptySpots);
-            sj.add(lineRepresentation);
+            String coloredPart = currentSize > 0 ? color(pkPatterns, line).name().repeat(currentSize) : "";
+            sj.add(coloredPart + ".".repeat(emptySpots));
+
         }
         return sj.toString();
     }
