@@ -122,8 +122,7 @@ public final class PkPatterns {
         for (TileDestination.Pattern line : TileDestination.Pattern.ALL) {
             int lineSize = size(pkPatterns, line);
             if (lineSize > 0) {
-                TileKind.Colored lineColor = color(pkPatterns, line);
-                int lineSet = PkTileSet.of(lineSize, lineColor);
+                int lineSet = PkTileSet.of(lineSize, color(pkPatterns, line));
                 packedTileSet = PkTileSet.union(packedTileSet, lineSet);
             }
         }

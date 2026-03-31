@@ -10,6 +10,8 @@ import java.util.Objects;
 public final class Game {
 
     private final List<PlayerDescription> playerDescriptions;
+    private static final int MIN_PLAYERS = 2;
+    private static final int MAX_PLAYERS = 4;
 
     /// Construit une configuration de partie pour les joueurs donnés.
     ///
@@ -22,9 +24,9 @@ public final class Game {
     /// @throws IllegalArgumentException
     ///         si le nombre de joueurs n'est pas compris entre 2 et 4
     ///         ou si l'ordre des identités est incorrect
-    public Game (List<PlayerDescription> playerDescriptions) {
-        //assert playerDescriptions != null;
-        Preconditions.checkArgument(playerDescriptions.size() >= 2 && playerDescriptions.size() <= 4);
+    public Game(List<PlayerDescription> playerDescriptions) {
+        assert playerDescriptions != null;
+        Preconditions.checkArgument(playerDescriptions.size() >= MIN_PLAYERS && playerDescriptions.size() <= MAX_PLAYERS);
         for (int i = 0; i < playerDescriptions.size(); ++i) {
             Preconditions.checkArgument(playerDescriptions.get(i).id() == PlayerId.ALL.get(i));
         }
@@ -45,7 +47,7 @@ public final class Game {
     ///
     /// @return la liste des identités des joueurs
     public List<PlayerId> playerIds() {
-        return PlayerId.ALL.subList(0,playersCount());
+        return PlayerId.ALL.subList(0, playersCount());
     }
 
     /// Retourne le nombre de joueurs de la partie.
@@ -59,14 +61,14 @@ public final class Game {
     /// dans la partie.
     ///
     /// @return la liste immuable des fabriques utilisées dans la partie
-    public List<TileSource.Factory> factories(){
-        return TileSource.Factory.ALL.subList(0, 2 * playersCount() + 1);
+    public List<TileSource.Factory> factories() {
+        return TileSource.Factory.ALL.subList(0, factoriesCount());
     }
 
     /// Retourne le nombre de fabriques utilisées dans la partie.
     ///
     /// @return le nombre de fabriques
-    public int factoriesCount(){
+    public int factoriesCount() {
         return 2 * playersCount() + 1;
     }
 
@@ -89,7 +91,7 @@ public final class Game {
     ///
     /// @return la taille maximale de la zone centrale
     public int centralAreaMaxSize() {
-        return 3 * factoriesCount() +1;
+        return (TileSource.Factory.TILES_PER_FACTORY - 1 ) * factoriesCount() + 1;
     }
 
     /// Décrit un joueur participant à la partie.
@@ -103,7 +105,7 @@ public final class Game {
         ///
         /// @throws NullPointerException
         ///         si l'un des arguments est nul
-        public PlayerDescription{
+        public PlayerDescription {
             Objects.requireNonNull(id);
             Objects.requireNonNull(name);
             Objects.requireNonNull(kind);
