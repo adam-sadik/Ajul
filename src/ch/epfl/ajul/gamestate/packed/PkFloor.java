@@ -15,6 +15,9 @@ public final class PkFloor {
     /// Représente la ligne plancher vide.
     public static final int EMPTY = 0;
 
+    private static final int BITS_PER_TILE = 3;
+    private static final int TILE_MASK = (1 << BITS_PER_TILE) - 1;
+    private static final int MAX_CAPACITY = 7;
 
     /// Retourne la taille de la ligne plancher empaquetée.
     ///
@@ -22,7 +25,7 @@ public final class PkFloor {
     ///        la ligne plancher empaquetée
     /// @return le nombre de tuiles qu'elle contient (entre 0 et 7)
     public static int size(int pkFloor) {
-        return 0b111 & pkFloor;
+        return TILE_MASK & pkFloor;
     }
 
     /// Retourne la sorte de tuile se trouvant à l'index donné de la ligne plancher empaquetée.
@@ -33,8 +36,9 @@ public final class PkFloor {
     ///        l'index de la tuile sur la ligne plancher
     /// @return la sorte de tuile correspondante
     public static TileKind tileAt(int pkFloor, int i) {
-        //assert i >= 0 && i < size(pkFloor);
-        int tileKindIndex = (pkFloor >>> (3 * (i + 1))) & 0b111;
+        assert i >= 0 && i < size(pkFloor);
+        int shift = BITS_PER_TILE * (i + 1);
+        int tileKindIndex = (pkFloor >>> shift) & TILE_MASK;
         return TileKind.ALL.get(tileKindIndex);
     }
 
@@ -54,14 +58,14 @@ public final class PkFloor {
             int count = PkTileSet.countOf(pkTileSet, kind);
             for (int k = 0; k < count; k++) {
                 int currentSize = size(currentFloor);
-                if (currentSize < 7) {
-                    int shift = 3 * (currentSize + 1);
-                    currentFloor = currentFloor | (kind.index() << shift);
-                    currentFloor = (currentFloor & ~0b111) | (currentSize + 1);
+                if (currentSize < MAX_CAPACITY) {
+                    int shift = BITS_PER_TILE * (currentSize + 1);
+                    currentFloor |= (kind.index() << shift);
+                    currentFloor = (currentFloor & ~TILE_MASK) | (currentSize + 1);
                 } else if (kind == TileKind.FIRST_PLAYER_MARKER) {
-                    int shift = 3 * 7;
-                    currentFloor = currentFloor & ~(0b111 << shift);
-                    currentFloor = currentFloor | (kind.index() << shift);
+                    int shift = BITS_PER_TILE * MAX_CAPACITY;
+                    currentFloor &= ~(TILE_MASK << shift);
+                    currentFloor |= (kind.index() << shift);
                 }
             }
         }
@@ -94,8 +98,7 @@ public final class PkFloor {
         int floorSize = size(pkFloor);
 
         for (int i = 0; i < floorSize; i++) {
-            TileKind tileKind = tileAt(pkFloor, i);
-            packedTileSet = PkTileSet.add(packedTileSet, tileKind);
+            packedTileSet = PkTileSet.add(packedTileSet, tileAt(pkFloor, i));
         }
 
         return packedTileSet;
