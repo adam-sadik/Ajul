@@ -178,8 +178,8 @@ public final class MutableGameState implements ReadOnlyGameState {
                         PkFloor.withAddedTiles(currentFloor, markerSet));
                 pkTileSourcesEditable[0] = PkTileSet.remove(pkTileSourcesEditable[0], TileKind.FIRST_PLAYER_MARKER);
             }
-                int chosenTiles = PkTileSet.of(countOfColor, color);
-                pkTileSourcesEditable[0] = PkTileSet.difference(pkTileSourcesEditable[0], chosenTiles);
+            int chosenTiles = PkTileSet.of(countOfColor, color);
+            pkTileSourcesEditable[0] = PkTileSet.difference(pkTileSourcesEditable[0], chosenTiles);
         }
 
         if (destination instanceof TileDestination.Pattern line) {
@@ -237,7 +237,7 @@ public final class MutableGameState implements ReadOnlyGameState {
                 containsAColorTile = true;
             }
             if ( containsAColorTile) {
-                    boolean duplicate = false;
+                boolean duplicate = false;
                 for (int j = 1; j < i; j++) {
                     if ( factoryNbI == pkTileSources.get(j)){
                         duplicate = true;
