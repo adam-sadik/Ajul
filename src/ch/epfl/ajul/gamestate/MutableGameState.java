@@ -135,6 +135,8 @@ public final class MutableGameState implements ReadOnlyGameState {
 
         TileKind.Colored.shuffle(finalDrawnArray, randomGenerator);
 
+        pkUniqueTileSources = PkIntSet32.EMPTY;
+
         int tileIndex = 0;
         for (int i = 1; i < pkTileSources.size(); i++) {
             for (int j = 0; j < TileSource.Factory.TILES_PER_FACTORY; j++) {
@@ -143,9 +145,23 @@ public final class MutableGameState implements ReadOnlyGameState {
                     tileIndex++;
                 }
             }
-        }
+            int factoryI = pkTileSourcesEditable[i];
 
-        updateUniqueTilesSources();
+            if (!PkTileSet.isEmpty(factoryI)) {
+                boolean isDuplicate = false;
+
+                for (int j = 1; j < i; j++) {
+                    if (factoryI == pkTileSourcesEditable[j]) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+
+                if (!isDuplicate) {
+                    pkUniqueTileSources = PkIntSet32.add(pkUniqueTileSources, i);
+                }
+            }
+        }
     }
 
     /// Enregistre et applique un coup joué par le joueur courant.
@@ -163,12 +179,35 @@ public final class MutableGameState implements ReadOnlyGameState {
 
 
         if (source instanceof TileSource.Factory) {
+            int sourceIndex = source.index();
             int initialSource = pkTileSourcesEditable[source.index()];
             int chosenTiles = PkTileSet.of(countOfColor, color);
             int unchosenTiles = PkTileSet.difference(initialSource, chosenTiles);
 
             pkTileSourcesEditable[0] = PkTileSet.union(pkTileSourcesEditable[0], unchosenTiles);
             pkTileSourcesEditable[source.index()] = PkTileSet.EMPTY;
+
+            pkUniqueTileSources = PkIntSet32.remove(pkUniqueTileSources, sourceIndex);
+
+            for (int i = sourceIndex + 1; i <= game.factoriesCount(); i++) {
+                if (pkTileSourcesEditable[i] == initialSource) {
+                    boolean isDuplicate = false;
+
+                    for (int j = 1; j < i; j++) {
+                        // pkTileSourcesEditable[sourceIndex] étant maintenant EMPTY,
+                        // cette boucle ne trouvera que d'éventuels autres doublons intacts.
+                        if (pkTileSourcesEditable[j] == initialSource) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+
+                    // Si elle n'a plus aucun jumeau avant elle, elle devient unique !
+                    if (!isDuplicate) {
+                        pkUniqueTileSources = PkIntSet32.add(pkUniqueTileSources, i);
+                    }
+                }
+            }
 
         } else if (source instanceof TileSource.CenterArea ) {
             if ( PkTileSet.countOf(pkTileSources.get(source.index()), TileKind.FIRST_PLAYER_MARKER) > 0) {
@@ -205,54 +244,21 @@ public final class MutableGameState implements ReadOnlyGameState {
 
         }
 
+        int centralColored = pkTileSourcesEditable[0];
+        if (PkTileSet.countOf(centralColored, TileKind.FIRST_PLAYER_MARKER) > 0) {
+            centralColored = PkTileSet.remove(centralColored, TileKind.FIRST_PLAYER_MARKER);
+        }
+
+        if (!PkTileSet.isEmpty(centralColored)) {
+            pkUniqueTileSources = PkIntSet32.add(pkUniqueTileSources, 0);
+        } else {
+            pkUniqueTileSources = PkIntSet32.remove(pkUniqueTileSources, 0);
+        }
+
         currentPlayerId = game.playerIds().get((currentPlayerId.ordinal() + 1) % game.playersCount());
 
-        updateUniqueTilesSources();
-
     }
 
-    /// Met à jour l'ensemble empaqueté représentant les sources de tuiles uniques.
-    /// Une source est considérée unique si elle contient des tuiles colorées et que
-    /// son contenu diffère de toutes les fabriques la précédant.
-    private void updateUniqueTilesSources() {
-        int newPkUniqueTileSource = PkIntSet32.EMPTY;
-
-        int centralArea = pkTileSources.get(TileSource.CENTER_AREA.index());
-        boolean centerAreaContainsFirstPlayerMarker = PkTileSet.countOf(centralArea, TileKind.FIRST_PLAYER_MARKER ) == TileKind.FIRST_PLAYER_MARKER.tilesCount();
-        if ( centerAreaContainsFirstPlayerMarker){
-            centralArea = PkTileSet.remove(centralArea, TileKind.FIRST_PLAYER_MARKER);
-        }
-        if ( !PkTileSet.isEmpty(centralArea)){
-            newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource,TileSource.CENTER_AREA.index() );
-        }
-
-        for (int i = 1; i <= game.factoriesCount() ; i++) {
-            int factoryNbI = pkTileSources.get(i);
-            int factoryNbIWithoutFirstPlayerMaker = factoryNbI;
-            boolean containsAColorTile = false;
-            if ( PkTileSet.countOf(factoryNbI, TileKind.FIRST_PLAYER_MARKER) == TileKind.FIRST_PLAYER_MARKER.tilesCount()) {
-                factoryNbIWithoutFirstPlayerMaker = PkTileSet.remove(factoryNbI, TileKind.FIRST_PLAYER_MARKER);
-            }
-            if ( !PkTileSet.isEmpty(factoryNbIWithoutFirstPlayerMaker) ){
-                containsAColorTile = true;
-            }
-            if ( containsAColorTile) {
-                boolean duplicate = false;
-                for (int j = 1; j < i; j++) {
-                    if ( factoryNbI == pkTileSources.get(j)){
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if ( !duplicate){
-                    newPkUniqueTileSource = PkIntSet32.add(newPkUniqueTileSource, i);
-                }
-            }
-
-        }
-        this.pkUniqueTileSources = newPkUniqueTileSource;
-
-    }
 
 
     /// Termine la manche en cours.
@@ -302,7 +308,8 @@ public final class MutableGameState implements ReadOnlyGameState {
 
             if (PkFloor.containsFirstPlayerMarker(pkFloor)) {
                 pkTileSourcesEditable[TileSource.CENTER_AREA.index()] =
-                        PkTileSet.add(pkTileSourcesEditable[TileSource.CENTER_AREA.index()], TileKind.FIRST_PLAYER_MARKER);
+                        PkTileSet.add(pkTileSourcesEditable[TileSource.CENTER_AREA.index()]
+                                , TileKind.FIRST_PLAYER_MARKER);
                 currentPlayerId = playerId;
             }
             PkPlayerStates.setPkFloor(pkPlayerStatesEditable, playerId, PkFloor.EMPTY);
