@@ -135,7 +135,7 @@ public final class PkWall {
     /// @param line la ligne à vérifier
     /// @return vrai si les 5 cases de la ligne sont occupées
     public static boolean isRowFull(int pkWall, TileDestination.Pattern line) {
-        return PkIntSet32.containsAll(pkWall, ROW0_MASK << line.index() * WALL_WIDTH);
+        return PkIntSet32.containsAll(pkWall, ROW0_MASK << (line.index() * WALL_WIDTH));
     }
 
     /// Vérifie si une colonne spécifique du mur est complète.

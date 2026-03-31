@@ -183,13 +183,6 @@ public class MyPointsTest {
         assertEquals(0, remaining);
     }
 
-    @Test
-    void newWallTilePointsWorksBeyondStandardLimits() {
-        assertEquals(10, Points.newWallTilePoints(10, 1));
-        assertEquals(42, Points.newWallTilePoints(1, 42));
-        assertEquals(150, Points.newWallTilePoints(100, 50));
-    }
-
     // =========================================================================
     // 3. TESTS EXHAUSTIFS DE floorPenalty
     // =========================================================================

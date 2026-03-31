@@ -18,7 +18,8 @@ public record Move(TileSource source, TileKind.Colored tileColor, TileDestinatio
     /// Il correspond au produit du nombre maximal de fabriques,
     /// du nombre maximal de couleurs distinctes dans une fabrique,
     /// et du nombre de destinations possibles.
-    public static final int MAX_MOVES = TileSource.Factory.COUNT * TileDestination.COUNT * TileSource.Factory.TILES_PER_FACTORY;
+    public static final int MAX_MOVES = TileSource.Factory.COUNT * TileDestination.COUNT *
+            TileSource.Factory.TILES_PER_FACTORY;
 
     /// Construit un coup avec la source, la couleur et la destination
     /// @throws NullPointerException si l'un des arguments (source,couleur,destination) est null

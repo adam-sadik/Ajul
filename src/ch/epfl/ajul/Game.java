@@ -26,7 +26,8 @@ public final class Game {
     ///         si le nombre de joueurs n'est pas compris entre 2 et 4
     ///         ou si l'ordre des identités est incorrect
     public Game(List<PlayerDescription> playerDescriptions) {
-        Preconditions.checkArgument(playerDescriptions.size() >= MIN_PLAYERS && playerDescriptions.size() <= MAX_PLAYERS);
+        Preconditions.checkArgument(playerDescriptions.size() >= MIN_PLAYERS &&
+                playerDescriptions.size() <= MAX_PLAYERS);
         for (int i = 0; i < playerDescriptions.size(); ++i) {
             Preconditions.checkArgument(playerDescriptions.get(i).id() == PlayerId.ALL.get(i));
         }

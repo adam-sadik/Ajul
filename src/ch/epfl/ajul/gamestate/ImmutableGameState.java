@@ -20,7 +20,8 @@ import java.util.Objects;
 /// @param pkPlayerStates les états empaquetés des joueurs
 /// @param currentPlayerId l'identité du joueur courant
 public record ImmutableGameState(Game game, int pkTileBag, ImmutableIntArray pkTileSources, int pkUniqueTileSources,
-                                 ImmutableIntArray pkPlayerStates, PlayerId currentPlayerId) implements ReadOnlyGameState {
+                                 ImmutableIntArray pkPlayerStates,
+                                 PlayerId currentPlayerId) implements ReadOnlyGameState {
 
     /// Construit un état de jeu immuable.
     /// Lève une exception si l'un des arguments objets fournis est null.
@@ -32,7 +33,7 @@ public record ImmutableGameState(Game game, int pkTileBag, ImmutableIntArray pkT
     }
     /// Retourne l'état initial d'une nouvelle partie.
     /// Dans cet état, les sources sont vides à l'exception de la zone centrale contenant le marqueur
-    /// de premier joueur, le sac contient toutes les tuiles colorées, et le premier joueur est actif.
+    /// du premier joueur, le sac contient toutes les tuiles colorées, et le premier joueur est actif.
     ///
     /// @param game la configuration de la partie
     /// @return le statut de jeu immuable initial
@@ -41,7 +42,8 @@ public record ImmutableGameState(Game game, int pkTileBag, ImmutableIntArray pkT
         sourcesArray[0] = PkTileSet.of(1, TileKind.FIRST_PLAYER_MARKER);
         ImmutableIntArray immutableArray = ImmutableIntArray.copyOf(sourcesArray);
         PlayerId firstPlayer = game.playerIds().getFirst();
-        return new ImmutableGameState(game, PkTileSet.FULL_COLORED, immutableArray, PkIntSet32.EMPTY, PkPlayerStates.initial(game), firstPlayer);
+        return new ImmutableGameState(game, PkTileSet.FULL_COLORED, immutableArray, PkIntSet32.EMPTY,
+                PkPlayerStates.initial(game), firstPlayer);
     }
 
     /// Retourne le récepteur (this) puisqu'il est déjà immuable.

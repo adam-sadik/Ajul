@@ -21,31 +21,36 @@ public final class Points {
     ///L'utilisation du type long ('L') évite l'overflow, avant le décalage et le cast en (int).
     private static final int TOTAL_FLOOR_PENALTY = (int) ((FLOOR_PENALTY * 0x1111111L) << 4);
 
+    private static final int BITS_PER_PENALTY = 4;
+    private static final int PENALTY_MASK = 0xF;
+    private static final int MAX_GROUP_SIZE = 5;
+    private static final int MAX_FLOOR_TILES = 7;
+
     /// Calcule les points obtenus lors de l'ajout d'une tuile au mur.
     /// @param hGroupSize Taille du groupe horizontal auquel appartient la tuile.
     /// @param vGroupSize Taille du groupe vertical auquel appartient la tuile.
     /// @return Le score rapporté par la tuile (h, v ou h+v).
     public static int newWallTilePoints(int hGroupSize, int vGroupSize) {
-        //assert hGroupSize >= 1 && hGroupSize <= 5;
-        //assert vGroupSize >= 1 && vGroupSize <= 5;
-        if (vGroupSize == 1) { return hGroupSize; }
-        else if (hGroupSize == 1) { return vGroupSize; }
-        else return hGroupSize + vGroupSize;
+        assert hGroupSize >= 1 && hGroupSize <= 5;
+        assert vGroupSize >= 1 && vGroupSize <= 5;
+        return (hGroupSize == 1 || vGroupSize == 1) ?
+                Math.max(hGroupSize, vGroupSize) :
+                (hGroupSize + vGroupSize);
     }
 
     /// Retourne la pénalité associée à une position précise dans la ligne plancher.
     /// @param tileIndex L'index de la tuile (0-6).
     /// @return La valeur de la pénalité (1, 2 ou 3).
     public static int floorPenalty(int tileIndex) {
-        //assert tileIndex >= 0 && tileIndex < 7;
-        return (FLOOR_PENALTY >>> (tileIndex * 4)) & 0xF;
+        assert tileIndex >= 0 && tileIndex < 7;
+        return (FLOOR_PENALTY >>> (tileIndex * BITS_PER_PENALTY)) & PENALTY_MASK;
     }
 
     /// Retourne la pénalité totale pour un nombre donné de tuiles dans la ligne plancher.
     /// @param tilesCount Le nombre total de tuiles (0-7).
     /// @return La somme des pénalités (0-14).
     public static int totalFloorPenalty(int tilesCount) {
-        //assert tilesCount >= 0 && tilesCount <= 7;
-        return (TOTAL_FLOOR_PENALTY >>> (tilesCount * 4)) & 0xF;
+        assert tilesCount >= 0 && tilesCount <= 7;
+        return (TOTAL_FLOOR_PENALTY >>> (tilesCount * BITS_PER_PENALTY)) & PENALTY_MASK;
     }
 }

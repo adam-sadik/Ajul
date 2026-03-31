@@ -29,7 +29,8 @@ public sealed interface TileSource {
     TileSource FACTORY_9 = Factory.FACTORY_9;
 
     /// Liste immuable de toutes les sources de tuiles (index 0 pour le centre, puis fabriques).
-    List<TileSource> ALL = List.of(CENTER_AREA, FACTORY_1, FACTORY_2, FACTORY_3, FACTORY_4, FACTORY_5, FACTORY_6, FACTORY_7, FACTORY_8, FACTORY_9);
+    List<TileSource> ALL = List.of(CENTER_AREA, FACTORY_1, FACTORY_2, FACTORY_3, FACTORY_4, FACTORY_5, FACTORY_6,
+            FACTORY_7, FACTORY_8, FACTORY_9);
     /// Nombre total de sources possibles (10).
     int COUNT = ALL.size();
 

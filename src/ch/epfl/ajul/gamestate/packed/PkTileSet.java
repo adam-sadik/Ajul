@@ -9,7 +9,7 @@ import java.util.random.RandomGenerator;
 /// Classe utilitaire permettant de manipuler des ensembles de tuiles empaquetés.
 /// - le nombre de tuiles de couleur A, compris entre 0 et 20 (inclus), est stocké dans les 6 bits de poids faible (index 0 à 5),
 /// - le nombre de tuiles de couleur B est stocké dans les 6 bits suivants (index 6 à 11),
-/// -  et ainsi de suite pour les couleurs C, D et E,
+/// - et ainsi de suite pour les couleurs C, D et E,
 /// - le nombre de marqueurs de premier joueur, compris entre 0 et 1 (inclus), est stocké dans le bit d'index 30,
 ///  et le bit de poids le plus fort (index 31) vaut toujours 0.
 /// @author Adam Ghali SADIK (412029)
@@ -29,6 +29,7 @@ public final class PkTileSet {
 
 
 
+
     private static int computeFull(boolean includeMarker) {
         int set = EMPTY;
         for (TileKind.Colored color : TileKind.Colored.ALL) {
@@ -41,19 +42,12 @@ public final class PkTileSet {
     }
 
     private static boolean isValid(int pkTileSet) {
-        int difference = FULL - pkTileSet;
-
-        // Les bits de séparation sont aux index 6, 12, 18, 24, 30 et 31.
-        // On crée un masque avec des 1 uniquement à ces positions.
-        // En binaire : 1100 0001 0000 0100 0001 0000 0100 0000
-        // En hexa : 0xC1041040
-        int separatorMask = 0xC1041040;
-
-        // Si la différence possède un 1 sur un bit de séparation, c'est qu'il y a eu un débordement.
-        // Donc si le "et" bit-à-bit n'est pas nul, l'ensemble est invalide.
-        // Il faut aussi s'assurer qu'aucun compteur n'est négatif en soi (ce qui allumerait le bit de signe).
-        return (difference & separatorMask) == 0 && pkTileSet >= 0;
-
+        for (TileKind.Colored color : TileKind.Colored.ALL) {
+            if (countOf(pkTileSet, color) > color.tilesCount()) {
+                return false;
+            }
+        }
+        return countOf(pkTileSet, TileKind.FIRST_PLAYER_MARKER) <= TileKind.FIRST_PLAYER_MARKER.tilesCount();
     }
 
     /// Retourne un ensemble de tuiles empaqueté ne contenant que le nombre spécifié de tuiles de la sorte donnée.
@@ -198,7 +192,8 @@ public final class PkTileSet {
     /// @param randomGenerator
     ///        le générateur de nombres aléatoires
     /// @return la somme de offset et de la taille de l'ensemble
-    public static int sampleColoredInto(int pkTileSet, TileKind.Colored[] destination, int offset, RandomGenerator randomGenerator) {
+    public static int sampleColoredInto(int pkTileSet, TileKind.Colored[] destination, int offset,
+                                        RandomGenerator randomGenerator) {
         int i = offset;
 
         for (TileKind.Colored color : TileKind.Colored.ALL) {
