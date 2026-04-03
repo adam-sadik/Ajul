@@ -38,10 +38,10 @@ public final class PkMove {
         int colorIndex = color.index() << COLOR_OFFSET;
         int destinationIndex = destination.index() << DESTINATION_OFFSET;
 
-        return (short) (sourceIndex | colorIndex| destinationIndex);
+        return (short) (sourceIndex | colorIndex | destinationIndex);
     }
 
-    /// Retoune la source du coup empaqueté donnée
+    /// Retourne la source du coup empaqueté donnée
     /// @return la source correspondante
     public static TileSource source(short pkMove) {
         int sourceIndex = (pkMove & SOURCE_MASK) >>> SOURCE_OFFSET;
@@ -50,7 +50,7 @@ public final class PkMove {
     }
 
     /// Retourne la couleur du coup empaqueté donné
-    /// @return la couleur courrespondante
+    /// @return la couleur correspondante
     public static TileKind.Colored color(short pkMove){
         int colorIndex = (pkMove & COLOR_MASK) >>> COLOR_OFFSET;
         assert colorIndex < TileKind.Colored.ALL.size();

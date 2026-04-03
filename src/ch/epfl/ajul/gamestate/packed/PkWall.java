@@ -57,7 +57,7 @@ public final class PkWall {
     /// @return La couleur correspondante.
     public static TileKind.Colored colorAt(TileDestination.Pattern line, int column) {
         assert column >= 0 && column < WALL_WIDTH;
-        int colorIndex = (line.index() * 4 + column) % TileKind.Colored.COUNT;
+        int colorIndex = (line.index() * (WALL_WIDTH - 1) + column) % TileKind.Colored.COUNT;
         return TileKind.Colored.ALL.get(colorIndex);
     }
 

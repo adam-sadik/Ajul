@@ -83,9 +83,9 @@ public final class PkTileSet {
 
         int aPlusB = sum & TILE_KIND_MASK;
         // On décale de 2 blocs (12 bits) pour récupérer C+D
-        int cPlusD = (sum >>> (2 * TILE_KIND_BITS)) & TILE_KIND_MASK;
+        int cPlusD = (sum >>> (TileKind.Colored.C.index() * TILE_KIND_BITS)) & TILE_KIND_MASK;
         // On décale de 4 blocs (24 bits) pour récupérer E+M
-        int ePlusM = (sum >>> (4 * TILE_KIND_BITS)) & TILE_KIND_MASK;
+        int ePlusM = (sum >>> (TileKind.Colored.E.index() * TILE_KIND_BITS)) & TILE_KIND_MASK;
 
         return aPlusB + cPlusD + ePlusM;
     }

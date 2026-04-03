@@ -30,9 +30,9 @@ public final class Submit {
     // CONFIGURATION
     // -------------
     // Jeton du premier membre du groupe
-    private static final String TOKEN_1 = "Ech6fahx";
+    private static final String TOKEN_1 = "Kei7OoK9";
     // Jeton du second membre (identique au premier pour les personnes travaillant seules)
-    private static final String TOKEN_2 = "Weeng2ji";
+    private static final String TOKEN_2 = "Vo6CoG8u";
     // Noms des éventuels fichiers Java additionnels à inclure (p.ex. "src/ch/epfl/MyClass.java")
     private static final List<String> ADDITIONAL_FILES =
             List.of();
