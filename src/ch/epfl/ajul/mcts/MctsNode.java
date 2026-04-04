@@ -50,7 +50,7 @@ public final class MctsNode {
 
             for (int i = 0; i < nodeKids.length ; ++i){
                 newPriority = nodeKids[i].averagePoints()
-                        + C*Math.sqrt(logParent/ (double) nodeKids[i].gameCount());
+                        + C*Math.sqrt(logParent/ nodeKids[i].gameCount());
                 if ( newPriority > priority){
                     priority = newPriority;
                     indexPriority = i;
